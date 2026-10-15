@@ -1,5 +1,5 @@
 ---
-title: md-blog 极简本地博客
+title: blog 极简本地博客
 created: 2026-09-09
 modified: 2026-09-09
 author: doubao
@@ -9,7 +9,7 @@ summary: 零框架自研的极简 md 博客：内容即 Markdown 文件，构建
 word_count: 940
 ---
 
-# md-blog · 极简本地博客
+# blog · 极简本地博客
 
 不用任何博客框架（Astro / Hexo / Hugo），一个 `build.mjs` 脚本 + 一个 `template.json` 配置，搞定一个极简静态博客。
 
@@ -24,7 +24,7 @@ word_count: 940
 ## 目录结构
 
 ```
-md-blog/
+blog/
 ├── content/            # 你的文章（.md 文件），放这里就行
 ├── templates/          # 模板库（minimal / paper / dark）
 ├── template.json       # 模板配置（换模板、微调都在这改）
@@ -52,7 +52,7 @@ content/
 ## 本地预览
 
 ```bash
-cd md-blog
+cd blog
 npm install
 npm run build      # 生成 dist/
 npm run preview    # 打开 http://localhost:8080
@@ -60,14 +60,14 @@ npm run preview    # 打开 http://localhost:8080
 
 ## 部署到 GitHub Pages
 
-1. GitHub 上新建一个仓库（如 `md-blog`），本地执行：
+1. GitHub 上新建一个仓库（如 `blog`），本地执行：
 
 ```bash
-cd md-blog
+cd blog
 git init
 git add .
 git commit -m "init"
-git remote add origin https://github.com/你的用户名/md-blog.git
+git remote add origin https://github.com/你的用户名/blog.git
 git push -u origin main
 ```
 
@@ -75,7 +75,7 @@ git push -u origin main
    - Source 选 **Deploy from a branch**
    - Branch 选 **gh-pages** + `/ (root)` → Save
 
-3. 访问 `https://你的用户名.github.io/md-blog/`
+3. 访问 `https://你的用户名.github.io/blog/`
 
 之后每次 `git push`，站点自动重新构建发布，无需任何手动操作。
 

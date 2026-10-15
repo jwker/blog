@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: md-blog-build
+  group: blog-build
   cancel-in-progress: true
 
 jobs:
