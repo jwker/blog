@@ -26,7 +26,7 @@ word_count: 940
 ```
 blog/
 ├── content/            # 你的文章（.md 文件），放这里就行
-├── templates/          # 模板库（minimal / paper / dark）
+├── templates/          # 模板库（minimal / paper / dark / riso）
 ├── template.json       # 模板配置（换模板、微调都在这改）
 ├── build.mjs           # 构建脚本（唯一的核心代码）
 ├── package.json        # 依赖：仅 markdown-it
@@ -84,13 +84,8 @@ git push -u origin main
 ```json
 {
   "site": { "name": "JJ 的笔记", "subtitle": "记录日常，写下想法" },
-  "template": "minimal",
+  "template": "riso",
   "tweak": {
-    "accent": "#1a1a1a",
-    "bg": "#ffffff",
-    "text": "#1a1a1a",
-    "font_family": "sans",
-    "font_size": 16,
     "show_date": true,
     "show_excerpt": false
   }
@@ -101,7 +96,7 @@ git push -u origin main
 | --- | --- |
 | `site.name` | 站点名（页面头部 + 页脚） |
 | `site.subtitle` | 副标题，留空不显示 |
-| `template` | 模板名：`minimal`（白）/ `paper`（暖纸）/ `dark`（深色） |
+| `template` | 模板名：`riso`（Riso 孔版）/ `minimal`（白）/ `paper`（暖纸）/ `dark`（深色） |
 | `tweak.accent` | 强调色（链接、引用线等），如 `#8a6f4d` |
 | `tweak.bg` / `tweak.text` | 背景色 / 文字色，可覆盖模板默认值 |
 | `tweak.font_family` | 字体：`sans`（黑体）/ `serif`（宋体）/ `mono`（等宽） |

@@ -3,13 +3,8 @@
     "name": "小姜同学的日常",
     "subtitle": "🙃"
   },
-  "template": "minimal",
+  "template": "riso",
   "tweak": {
-    "accent": "#1a1a1a",
-    "bg": "#ffffff",
-    "text": "#1a1a1a",
-    "font_family": "sans",
-    "font_size": 16,
     "show_date": true,
     "show_excerpt": false
   }
