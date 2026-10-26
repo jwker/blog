@@ -60,9 +60,6 @@ img{max-width:100%;}
 .topline a:hover{color:var(--cobalt);}
 .masthead h1{display:inline-block;max-width:100%;margin:30px 0 0;padding:.02em .09em .07em;background:var(--cobalt);color:#fff;box-shadow:8px 8px 0 var(--pink);font-family:var(--sans);font-size:clamp(46px,10.5vw,128px);font-weight:900;line-height:.98;letter-spacing:-.035em;}
 .masthead h1 a{color:inherit;}
-.subline{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:22px;padding:10px 0;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
-.subline span::before{content:"■";display:inline-block;margin-right:8px;color:var(--pink);font-size:8px;vertical-align:1px;}
-.subline span:nth-child(2n)::before{color:var(--cobalt);}
 
 /* 最新一条 */
 .hero{position:relative;margin-top:48px;padding:44px 46px 46px;border:2px solid var(--ink);background:var(--pink);color:#151517;box-shadow:9px 9px 0 var(--ink);overflow:hidden;cursor:pointer;}
@@ -584,12 +581,6 @@ function page(opts) {
     ${navHtml ? `<nav aria-label="主导航">${navHtml}</nav>` : ''}
   </div>
   <h1><a href="${rootPrefix}index.html">${site.name || '我的博客'}</a></h1>
-  <div class="subline">
-    <span>随笔 ${String(home ? home.essayCount : 0).padStart(2, '0')}</span>
-    <span>文章 ${String(home ? home.articleCount : 0).padStart(2, '0')}</span>
-    <span>更新至 ${home ? home.updated : dateDot(new Date().toISOString())}</span>
-    ${site.subtitle ? `<span>${site.subtitle}</span>` : ''}
-  </div>
 </header>`;
 
   return `<!DOCTYPE html>
@@ -779,7 +770,6 @@ const indexHtml = page({
     hasCatBar: homeLayout === 'timeline' && categories.length > 1,
     essayCount: essays.length,
     articleCount: articles.length,
-    updated: dateDot(posts[0] ? posts[0].date : new Date().toISOString()),
   },
 });
 fs.writeFileSync(path.join(distDir, 'index.html'), indexHtml);
