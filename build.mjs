@@ -126,8 +126,15 @@ img{max-width:100%;}
 .article-strip h2{margin:0;font-family:var(--sans);font-size:clamp(19px,2.2vw,27px);font-weight:800;line-height:1.4;letter-spacing:-.01em;}
 .article-strip time{font-family:var(--mono);font-size:10px;color:rgba(242,239,228,.62);white-space:nowrap;}
 
+/* 分类筛选条 */
+.catbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:38px;padding-bottom:18px;border-bottom:2px solid var(--ink);}
+.catbar button{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);background:none;border:1.5px solid var(--ink);padding:5px 11px;cursor:pointer;}
+.catbar button span{opacity:.55;}
+.catbar button:hover{color:var(--cobalt);}
+.catbar button.on{background:var(--pink);color:var(--ink);}
+
 /* 首页时间轴：随笔与文章按时间顺序混排 */
-.timeline{margin-top:46px;}
+.timeline{margin-top:30px;}
 .entry{margin-bottom:30px;}
 .entry .date{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
 .essay{display:block;padding:4px 0 6px 22px;border-left:4px solid var(--pink);}
@@ -373,10 +380,11 @@ function walk(dir, out = []) {
   return out;
 }
 
-// 取文件最后一次提交的时间（git，完整 ISO 含时分秒），拿不到返回 null
+// 取文件最后一次改内容的提交时间（git，完整 ISO 含时分秒），拿不到返回 null
+// --follow 追踪改名，--diff-filter=AM 跳过纯改名提交，文件移目录后日期不变
 function gitDate(f) {
   try {
-    const iso = execSync(`git log -1 --format=%cI -- "${f}"`, { cwd: root, encoding: 'utf8' }).trim();
+    const iso = execSync(`git log -1 --follow --diff-filter=AM --format=%cI -- "${f}"`, { cwd: root, encoding: 'utf8' }).trim();
     return iso || null;
   } catch {
     return null;
@@ -386,14 +394,17 @@ function gitDate(f) {
 function parseFile(f) {
   const rel = path.relative(contentDir, f).replace(/\.md$/, '');
   const base = path.basename(f, '.md');
+  // 分类 = 文件所在的一级目录；直接放在 content/ 根目录的归入「未分类」
+  const parts = rel.split('/');
+  const category = parts.length > 1 ? parts[0] : '未分类';
   // 兼容：文件名带日期前缀（YYYY-MM-DD-标题.md）时仍解析
   const m = base.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
-  if (m) return { date: m[1] + 'T00:00:00', title: m[2], slug: rel };
-  // 常规：标题 = 文件名，日期 = 该文件最后提交时间
+  if (m) return { date: m[1] + 'T00:00:00', title: m[2], slug: base, category, file: f };
+  // 常规：标题 = 文件名，日期 = 该文件最后改内容的提交时间
   const g = gitDate(f);
-  if (g) return { date: g, title: base, slug: rel };
+  if (g) return { date: g, title: base, slug: base, category, file: f };
   // 兜底：未提交过的文件用修改时间
-  return { date: fs.statSync(f).mtime.toISOString(), title: base, slug: rel };
+  return { date: fs.statSync(f).mtime.toISOString(), title: base, slug: base, category, file: f };
 }
 
 // 首页布局：timeline（默认，按时间顺序混排随笔与文章）/ classic（旧版分块排版）
@@ -427,7 +438,7 @@ function excerptFromRaw(raw, max = 78) {
 // 随笔：无标题，正文直接铺在页面里
 function renderEssayEntry(e) {
   const body = e.textHtml || '<p>（这篇还没有正文）</p>';
-  return `<article class="entry" data-type="essay">
+  return `<article class="entry" data-type="essay" data-cat="${e.category}">
   <a class="essay" href="${e.href}">
     <span class="meta"><span class="tag">随笔</span>${entryTime(e)}</span>
     <div class="body">${body}</div>
@@ -438,7 +449,7 @@ function renderEssayEntry(e) {
 
 // 文章：黑卡，标题 + 摘要 + 阅读全文
 function renderArticleEntry(a) {
-  return `<article class="entry" data-type="article">
+  return `<article class="entry" data-type="article" data-cat="${a.category}">
   <a class="article" href="posts/${encodeURI(a.slug)}.html">
     <span class="lead"><span class="tag">文章</span>${entryTime(a)}</span>
     <span class="main">
@@ -450,11 +461,22 @@ function renderArticleEntry(a) {
 </article>`;
 }
 
+// 分类筛选条：全部 + 每个分类，点击在前端过滤条目
+function renderCatBar(categories) {
+  if (categories.length <= 1) return '';
+  const buttons = categories
+    .map((c) => `<button type="button" data-cat="${c.name === '全部' ? '*' : c.name}"${c.name === '全部' ? ' class="on"' : ''}>${c.name} <span>${c.count}</span></button>`)
+    .join('\n      ');
+  return `<nav class="catbar" id="catbar" aria-label="分类筛选">
+      ${buttons}
+    </nav>`;
+}
+
 // 列表页：随笔与文章按时间倒序混排成一条流
-function renderTimeline(list, essayBySlug) {
+function renderTimeline(list, essayByFile) {
   const entries = list.map((p) => {
-    if (p.isEssay) return renderEssayEntry(essayBySlug.get(p.slug));
-    const raw = fs.readFileSync(path.join(contentDir, p.slug + '.md'), 'utf8');
+    if (p.isEssay) return renderEssayEntry(essayByFile.get(p.file));
+    const raw = fs.readFileSync(p.file, 'utf8');
     return renderArticleEntry({ ...p, excerpt: excerptFromRaw(raw) });
   });
   return `<div class="timeline">\n${entries.join('\n')}\n</div>`;
@@ -498,6 +520,26 @@ function page(opts) {
     if (e.key === 'Escape') lbClose();
     if (e.key === 'ArrowLeft') lbNav(-1);
     if (e.key === 'ArrowRight') lbNav(1);
+  });
+})();
+<\/script>` : '';
+
+  // 分类筛选：点分类按钮过滤首页条目（纯前端，不生成额外页面）
+  const catFilter = home && home.hasCatBar ? `<script>
+(function(){
+  var bar = document.getElementById('catbar');
+  if (!bar) return;
+  var entries = Array.prototype.slice.call(document.querySelectorAll('.entry'));
+  bar.addEventListener('click', function(ev){
+    var btn = ev.target.closest('button');
+    if (!btn) return;
+    var cat = btn.getAttribute('data-cat');
+    Array.prototype.forEach.call(bar.querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b === btn);
+    });
+    entries.forEach(function(e){
+      e.style.display = (cat === '*' || e.getAttribute('data-cat') === cat) ? '' : 'none';
+    });
   });
 })();
 <\/script>` : '';
@@ -553,6 +595,7 @@ ${body}
   </footer>
 </div>
 ${lightbox}
+${catFilter}
 </body>
 </html>`;
 }
@@ -598,7 +641,7 @@ async function buildImages(srcDir, outDir) {
 // 图片引用路径适配：md 里写 images/xxx.jpg、/images/xxx.jpg 或 ../images/xxx.jpg 都归一
 // 列表页在站点根（前缀 ''），文章页在 posts/ 下（前缀 '../'）
 function fixImageSrc(html, rootPrefix) {
-  return html.replace(/src="(?:\.\.\/)?\/?images\//g, rootPrefix ? `src="${rootPrefix}images/` : 'src="images/');
+  return html.replace(/src="(?:\.\.\/)*\/?images\//g, rootPrefix ? `src="${rootPrefix}images/` : 'src="images/');
 }
 
 // 随笔图片分组：把连续的图片段落合并成九宫格容器（朋友圈式）
@@ -630,11 +673,17 @@ const imgCount = await buildImages(imagesDir, path.join(distDir, 'images'));
 
 const files = walk(contentDir).sort();
 const posts = files.map(parseFile).sort((a, b) => (a.date === b.date ? 0 : (a.date < b.date ? 1 : -1)));
-// 分类：标题含"随笔" → 随笔（列表内联全文），其余 → 文章（列表只显示标题）
-for (const p of posts) p.isEssay = p.title.includes('随笔');
+// 分类：所在目录就是分类，「随笔」是保留分类（首页展开全文，其余分类走黑卡）
+for (const p of posts) p.isEssay = p.category === '随笔';
+// slug 重名时（如不同分类下同名文件）用分类名做前缀
+const usedSlugs = new Map();
+for (const p of posts) {
+  if (usedSlugs.has(p.slug)) p.slug = `${p.category}-${p.slug}`;
+  usedSlugs.set(p.slug, p);
+}
 
 const essays = posts.filter(p => p.isEssay).map((p) => {
-  const raw = fs.readFileSync(path.join(contentDir, p.slug + '.md'), 'utf8');
+  const raw = fs.readFileSync(p.file, 'utf8');
   const rendered = fixImageSrc(md.render(raw), '');
   return {
     ...p,
@@ -682,11 +731,21 @@ if (homeLayout === 'classic') {
   });
 }
 
-const essayBySlug = new Map(essays.map((e) => [e.slug, e]));
+const essayByFile = new Map(essays.map((e) => [e.file, e]));
+
+// 分类统计：全部 + 每个分类（按条目数从多到少）
+const catCounts = new Map();
+for (const p of posts) catCounts.set(p.category, (catCounts.get(p.category) || 0) + 1);
+const categories = [
+  { name: '全部', count: posts.length },
+  ...[...catCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'))
+    .map(([name, count]) => ({ name, count })),
+];
 
 const indexBody = homeLayout === 'classic'
   ? [...listBlocks, renderGrid(gridItems), renderArticles(articles)].filter(Boolean).join('\n')
-  : renderTimeline(posts, essayBySlug);
+  : [renderCatBar(categories), renderTimeline(posts, essayByFile)].filter(Boolean).join('\n');
 
 const indexHtml = page({
   title: `${site.name || '我的博客'}${site.subtitle ? ' · ' + site.subtitle : ''}`,
@@ -694,6 +753,7 @@ const indexHtml = page({
   needsLightbox: true,
   home: {
     layout: homeLayout,
+    hasCatBar: homeLayout === 'timeline' && categories.length > 1,
     essayCount: essays.length,
     articleCount: articles.length,
     updated: dateDot(posts[0] ? posts[0].date : new Date().toISOString()),
@@ -703,11 +763,13 @@ fs.writeFileSync(path.join(distDir, 'index.html'), indexHtml);
 
 // 文章页
 for (const p of posts) {
-  const raw = fs.readFileSync(path.join(contentDir, p.slug + '.md'), 'utf8');
+  const raw = fs.readFileSync(p.file, 'utf8');
   const rendered = fixImageSrc(md.render(raw), '../');
   // 随笔详情页：图片九宫格 + 灯箱；文章详情页：自然流展示
   let bodyHtml = p.isEssay ? groupImages(rendered) : rendered;
+  // 详情页标签：随笔显示「随笔」，其他分类显示分类名
   const typeLabel = p.isEssay ? '随笔' : '文章';
+  const catLabel = p.isEssay ? '随笔' : p.category;
   // 随笔标题就是文件名（常带日期数字），详情页标题改用类型 + 日期，更干净
   const pageHeading = p.isEssay ? `${typeLabel} · ${dateDot(p.date)}` : displayTitle(p.title);
   // 文章详情页：正文前加标题；若正文开头有一级标题且与标题相同则去掉，避免重复
@@ -717,7 +779,7 @@ for (const p of posts) {
     titleHtml = `<h1 class="post-title">《${pageHeading}》</h1>`;
   }
   const postHtml = `<article class="post-full">
-  <div class="entry-meta">${showDate ? `<time datetime="${p.date.slice(0, 10)}">${dateDot(p.date)}</time>` : ''}<span class="tag">${typeLabel}</span></div>
+  <div class="entry-meta">${showDate ? `<time datetime="${p.date.slice(0, 10)}">${dateDot(p.date)}</time>` : ''}<span class="tag">${catLabel}</span></div>
   ${titleHtml}
   <div class="md-body">${bodyHtml}</div>
   <a class="back" href="../index.html">← 返回列表</a>
@@ -729,7 +791,7 @@ for (const p of posts) {
     needsLightbox: p.isEssay,
     compact: {
       heading: pageHeading,
-      label: showDate ? `${typeLabel} / ${dateDot(p.date)}` : typeLabel,
+      label: showDate ? `${catLabel} / ${dateDot(p.date)}` : catLabel,
     },
   }));
 }
