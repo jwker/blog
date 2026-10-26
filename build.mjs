@@ -451,7 +451,7 @@ function renderEssayEntry(e) {
 function renderArticleEntry(a) {
   return `<article class="entry" data-type="article" data-cat="${a.category}">
   <a class="article" href="posts/${encodeURI(a.slug)}.html">
-    <span class="lead"><span class="tag">文章</span>${entryTime(a)}</span>
+    <span class="lead"><span class="tag">${a.category}</span>${entryTime(a)}</span>
     <span class="main">
       <span class="title">《${displayTitle(a.title)}》</span>
       ${a.excerpt ? `<span class="excerpt">${a.excerpt}</span>` : ''}
@@ -733,12 +733,14 @@ if (homeLayout === 'classic') {
 
 const essayByFile = new Map(essays.map((e) => [e.file, e]));
 
-// 分类统计：全部 + 每个分类（按条目数从多到少）
+// 分类统计：全部 + 未分类（固定显示）+ 其它分类（按条目数从多到少）
 const catCounts = new Map();
 for (const p of posts) catCounts.set(p.category, (catCounts.get(p.category) || 0) + 1);
 const categories = [
   { name: '全部', count: posts.length },
+  { name: '未分类', count: catCounts.get('未分类') || 0 },
   ...[...catCounts.entries()]
+    .filter(([name]) => name !== '未分类')
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'))
     .map(([name, count]) => ({ name, count })),
 ];
