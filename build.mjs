@@ -482,6 +482,27 @@ function renderTimeline(list, essayByFile) {
   return `<div class="timeline">\n${entries.join('\n')}\n</div>`;
 }
 
+// 改名记录：旧路径 → 新路径（取最近一次改名）
+// 用于给改过名的文章生成旧地址跳转页
+function renameMap() {
+  const map = new Map();
+  try {
+    const log = execSync('git log --diff-filter=R --name-status --format= -M -- content/', { cwd: root, encoding: 'utf8' });
+    for (const line of log.split('\n')) {
+      const m = line.match(/^R\d+\t(.+)\t(.+)$/);
+      if (m) map.set(m[2].trim(), m[1].trim());
+    }
+  } catch {
+    // 没有 git 历史时忽略
+  }
+  return map;
+}
+
+// 文件名（含路径）→ 站点里的 slug（扁平，只有文件名）
+function slugOfPath(p) {
+  return path.basename(p).replace(/\.md$/, '');
+}
+
 // ---------- 页面骨架 ----------
 // rootPrefix：相对站点根的前缀（列表页 ''，文章页 '../'）
 // needsLightbox：随笔页面（列表页/随笔详情页）带图片灯箱，文章页不带
@@ -796,6 +817,35 @@ for (const p of posts) {
       label: showDate ? `${catLabel} / ${dateDot(p.date)}` : catLabel,
     },
   }));
+}
+
+// 旧地址跳转：文件改过名时，给旧 slug 生成一个跳转页（沿改名链回溯所有旧路径）
+const renames = renameMap();
+let redirectCount = 0;
+for (const p of posts) {
+  let rel = path.relative(root, p.file);
+  while (renames.has(rel)) {
+    const oldPath = renames.get(rel);
+    const oldSlug = slugOfPath(oldPath);
+    if (oldSlug && oldSlug !== p.slug) {
+      const target = `${encodeURI(p.slug)}.html`;
+      fs.writeFileSync(path.join(distDir, 'posts', `${encodeURI(oldSlug)}.html`), `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>页面已移动</title>
+<meta http-equiv="refresh" content="0; url=${target}">
+<link rel="canonical" href="${target}">
+</head>
+<body>
+<p>这篇文章已移动到 <a href="${target}">新地址</a>。</p>
+</body>
+</html>
+`);
+      redirectCount++;
+    }
+    rel = oldPath;
+  }
 }
 
 console.log(`✔ 构建完成：${posts.length} 篇文章 + ${imgCount} 张图片 → dist/`);
