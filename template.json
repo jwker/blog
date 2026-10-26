@@ -3,9 +3,8 @@
     "name": "小姜同学的日常",
     "subtitle": "🙃"
   },
-  "template": "riso",
   "tweak": {
-    "show_date": true,
-    "show_excerpt": false
+    "home_layout": "timeline",
+    "show_date": true
   }
 }

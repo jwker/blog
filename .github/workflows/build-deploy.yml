@@ -12,7 +12,6 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'template.json'
-      - 'templates/**'
       - '.github/workflows/**'
   workflow_dispatch:
 

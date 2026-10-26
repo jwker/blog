@@ -3,8 +3,8 @@
  * 极简 md 博客构建脚本（零框架）
  * 扫描 content/ 下的 .md 文件 → 生成静态站到 dist/
  * 标题取文件名（支持 "YYYY-MM-DD-标题.md" 命名，日期从文件名解析）
- * 模板与微调：template.json 驱动
- * 当前皮肤：Riso 孔版印刷（纸面 + 钴蓝 + 荧光粉）
+ * 样式：Riso 孔版印刷（纸面 + 钴蓝 + 荧光粉），写在 build.mjs 里
+ * 微调：template.json 驱动（站点信息 + 少量开关）
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,19 +17,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = __dirname;
 const contentDir = path.join(root, 'content');
 const distDir = path.join(root, 'dist');
-const templatesDir = path.join(root, 'templates');
 const imagesDir = path.join(root, 'images');
 
 // ---------- 读取配置 ----------
 const config = JSON.parse(fs.readFileSync(path.join(root, 'template.json'), 'utf8'));
 const site = config.site || {};
-const tplName = config.template || 'minimal';
-const tplFile = path.join(templatesDir, `${tplName}.css`);
-if (!fs.existsSync(tplFile)) {
-  console.error(`模板不存在: ${tplName}（templates/ 目录下可用的：${fs.readdirSync(templatesDir).map(f => f.replace('.css', '')).join(', ')}）`);
-  process.exit(1);
-}
-const tplCss = fs.readFileSync(tplFile, 'utf8');
 
 // 微调参数 → CSS 变量覆盖
 const t = config.tweak || {};
@@ -39,7 +31,6 @@ const fontStacks = {
   mono: "'SF Mono','JetBrains Mono',Consolas,monospace",
 };
 const overrides = [];
-if (t.accent) overrides.push(`--accent:${t.accent}`);
 if (t.bg) overrides.push(`--bg:${t.bg}`);
 if (t.text) overrides.push(`--text:${t.text}`);
 if (t.font_family && fontStacks[t.font_family]) overrides.push(`--font-family:${fontStacks[t.font_family]}`);
@@ -49,7 +40,7 @@ const showDate = t.show_date === true;
 
 // ---------- 基础布局 CSS（Riso 孔版） ----------
 const baseCss = `
-:root{--ink:var(--text);--paper:var(--bg);--pink:#ff4f7e;--cobalt:#2340c8;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
+:root{--bg:#f2efe4;--text:#151517;--muted:#5d5b53;--ink:var(--text);--paper:var(--bg);--pink:#ff4f7e;--cobalt:#2340c8;--card-bg:#151517;--card-fg:#f2efe4;--font-family:'Songti SC','Noto Serif SC','SimSun',serif;--font-size:17px;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:var(--font-family,var(--serif));font-size:var(--font-size);line-height:1.9;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
@@ -74,7 +65,7 @@ img{max-width:100%;}
 .subline span:nth-child(2n)::before{color:var(--cobalt);}
 
 /* 最新一条 */
-.hero{position:relative;margin-top:48px;padding:44px 46px 46px;border:2px solid var(--ink);background:var(--pink);box-shadow:9px 9px 0 var(--ink);overflow:hidden;cursor:pointer;}
+.hero{position:relative;margin-top:48px;padding:44px 46px 46px;border:2px solid var(--ink);background:var(--pink);color:#151517;box-shadow:9px 9px 0 var(--ink);overflow:hidden;cursor:pointer;}
 .hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(21,21,23,.5) .7px,transparent .9px);background-size:6px 6px;opacity:.14;pointer-events:none;}
 .hero::before{content:"“";position:absolute;top:-34px;right:22px;z-index:0;font-family:Georgia,"Times New Roman",serif;font-size:220px;line-height:1;color:var(--paper);opacity:.55;pointer-events:none;}
 .hero>*{position:relative;z-index:1;}
@@ -88,7 +79,7 @@ img{max-width:100%;}
 /* 钴蓝面板 / 图文分栏 */
 .split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center;margin-top:64px;cursor:pointer;}
 .split-solo{grid-template-columns:1fr;}
-.cobalt-panel{position:relative;padding:34px 36px 38px;border:2px solid var(--ink);background:var(--cobalt);color:var(--paper);box-shadow:9px 9px 0 var(--pink);}
+.cobalt-panel{position:relative;padding:34px 36px 38px;border:2px solid var(--ink);background:var(--cobalt);color:#f2efe4;box-shadow:9px 9px 0 var(--pink);}
 .cobalt-panel .meta{color:rgba(242,239,228,.8);}
 .cobalt-panel .panel-text p{margin:0 0 .8em;font-family:var(--serif);font-size:20px;line-height:1.85;}
 .cobalt-panel .panel-text p:last-child{margin-bottom:0;}
@@ -129,11 +120,34 @@ img{max-width:100%;}
 
 /* 文章 */
 .articles{margin-top:78px;display:grid;gap:28px;}
-.article-strip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);box-shadow:9px 9px 0 var(--pink);transition:transform .15s ease;}
+.article-strip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--pink);transition:transform .15s ease;}
 .article-strip:hover{transform:translate(-2px,-2px);}
 .article-strip .label{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
 .article-strip h2{margin:0;font-family:var(--sans);font-size:clamp(19px,2.2vw,27px);font-weight:800;line-height:1.4;letter-spacing:-.01em;}
 .article-strip time{font-family:var(--mono);font-size:10px;color:rgba(242,239,228,.62);white-space:nowrap;}
+
+/* 首页时间轴：随笔与文章按时间顺序混排 */
+.timeline{margin-top:46px;}
+.entry{margin-bottom:30px;}
+.entry .date{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
+.essay{display:block;padding:4px 0 6px 22px;border-left:4px solid var(--pink);}
+.essay .meta{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.essay .tag{display:inline-block;padding:1px 7px;border:1.5px solid var(--pink);color:var(--cobalt);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
+.essay:hover .tag{background:var(--pink);color:var(--ink);}
+.essay .body p{margin:0 0 .8em;max-width:44em;font-size:17px;line-height:1.85;}
+.essay .body p:last-child{margin-bottom:0;}
+.essay .body a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
+.essay .img-grid-single img{max-height:420px;width:auto;max-width:100%;}
+.article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--cobalt);transition:transform .15s ease;}
+.article:hover{transform:translate(-2px,-2px);}
+.article .lead{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.article .lead .date{color:rgba(242,239,228,.55);}
+.article .tag{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
+.article .main{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.article .title{font-family:var(--sans);font-size:clamp(20px,2.3vw,28px);font-weight:800;line-height:1.35;letter-spacing:-.01em;}
+.article .excerpt{display:block;font-size:15px;line-height:1.7;color:rgba(242,239,228,.7);}
+.article .more{font-family:var(--mono);font-size:10px;letter-spacing:.08em;white-space:nowrap;color:var(--pink);}
+.article .more::before{content:"▸";margin-right:6px;}
 
 /* 页脚 */
 .foot{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-top:44px;padding:16px 0 36px;border-top:2px solid var(--ink);font-family:var(--mono);font-size:10px;color:var(--muted);}
@@ -144,6 +158,8 @@ img{max-width:100%;}
 .post-main{padding-top:54px;}
 .post-full{max-width:900px;border-top:2px solid var(--ink);padding-top:26px;padding-bottom:8px;}
 .post-full .entry-meta{margin-bottom:30px;}
+.post-full .post-title{margin:0 0 26px;font-family:var(--sans);font-size:clamp(28px,4vw,42px);font-weight:900;line-height:1.25;letter-spacing:-.02em;}
+.post-full .post-title + .md-body > h1:first-child{margin-top:0;}
 .md-body{font-size:1em;}
 .md-body h1,.md-body h2,.md-body h3{font-family:var(--sans);line-height:1.4;letter-spacing:-.01em;margin:1.6em 0 .6em;}
 .md-body h1{font-size:1.65em;}
@@ -192,6 +208,10 @@ img{max-width:100%;}
   .split{grid-template-columns:1fr;gap:36px;}
   .icon-card{width:min(100%,320px);justify-self:center;}
   .grid{grid-template-columns:1fr;}
+  .article{grid-template-columns:1fr;gap:12px;align-items:start;}
+  .essay{padding-left:16px;}
+  .img-grid{max-width:100%;}
+  .img-grid-single{max-width:60%;}
 }
 @media (max-width:560px){
   .topline{font-size:9px;}
@@ -238,6 +258,11 @@ function dateDot(iso) {
 // 去掉标签取纯文本
 function textOf(html) {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// 正则元字符转义（拼正则时用）
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // 把渲染后的正文拆成「图片」和「文字」两部分，用于列表页的杂志式排版
@@ -371,6 +396,70 @@ function parseFile(f) {
   return { date: fs.statSync(f).mtime.toISOString(), title: base, slug: rel };
 }
 
+// 首页布局：timeline（默认，按时间顺序混排随笔与文章）/ classic（旧版分块排版）
+const homeLayout = t.home_layout === 'classic' ? 'classic' : 'timeline';
+
+// ---------- 首页：时间轴 ----------
+// 条目右侧的时间戳；show_date 为 false 时不显示
+function entryTime(p) {
+  if (!showDate) return '';
+  const d = p.date.slice(0, 10);
+  const hm = p.date.slice(11, 16);
+  return `<time class="date" datetime="${d}T${hm}">${dateDot(p.date)} ${hm}</time>`;
+}
+
+// 文章摘要：取正文第一段（跳过标题、图片、代码块），过长截断
+function excerptFromRaw(raw, max = 78) {
+  for (const block of raw.split(/\n\s*\n/)) {
+    const t = block.trim();
+    if (!t || t.startsWith('#') || t.startsWith('![') || t.startsWith('```')) continue;
+    const clean = t
+      .replace(/^[-*+>\s]+/, '')
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[*_`>#]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (clean.length > 4) return clean.length > max ? clean.slice(0, max) + '…' : clean;
+  }
+  return '';
+}
+
+// 随笔：无标题，正文直接铺在页面里
+function renderEssayEntry(e) {
+  const body = e.textHtml || '<p>（这篇还没有正文）</p>';
+  return `<article class="entry" data-type="essay">
+  <a class="essay" href="${e.href}">
+    <span class="meta"><span class="tag">随笔</span>${entryTime(e)}</span>
+    <div class="body">${body}</div>
+    ${mediaGrid(e.images)}
+  </a>
+</article>`;
+}
+
+// 文章：黑卡，标题 + 摘要 + 阅读全文
+function renderArticleEntry(a) {
+  return `<article class="entry" data-type="article">
+  <a class="article" href="posts/${encodeURI(a.slug)}.html">
+    <span class="lead"><span class="tag">文章</span>${entryTime(a)}</span>
+    <span class="main">
+      <span class="title">《${displayTitle(a.title)}》</span>
+      ${a.excerpt ? `<span class="excerpt">${a.excerpt}</span>` : ''}
+    </span>
+    <span class="more">阅读全文</span>
+  </a>
+</article>`;
+}
+
+// 列表页：随笔与文章按时间倒序混排成一条流
+function renderTimeline(list, essayBySlug) {
+  const entries = list.map((p) => {
+    if (p.isEssay) return renderEssayEntry(essayBySlug.get(p.slug));
+    const raw = fs.readFileSync(path.join(contentDir, p.slug + '.md'), 'utf8');
+    return renderArticleEntry({ ...p, excerpt: excerptFromRaw(raw) });
+  });
+  return `<div class="timeline">\n${entries.join('\n')}\n</div>`;
+}
+
 // ---------- 页面骨架 ----------
 // rootPrefix：相对站点根的前缀（列表页 ''，文章页 '../'）
 // needsLightbox：随笔页面（列表页/随笔详情页）带图片灯箱，文章页不带
@@ -401,7 +490,7 @@ function page(opts) {
   window.lbNav = function(d){ show(cur + d); };
   imgs.forEach(function(img, i){
     img.style.cursor = 'zoom-in';
-    img.addEventListener('click', function(ev){ ev.stopPropagation(); show(i); });
+    img.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); show(i); });
   });
   lb.addEventListener('click', function(ev){ if (ev.target === lb) lbClose(); });
   document.addEventListener('keydown', function(e){
@@ -412,6 +501,11 @@ function page(opts) {
   });
 })();
 <\/script>` : '';
+
+  // 顶部导航：旧版分块排版才需要「随笔 / 文章」两个锚点
+  const navHtml = home && home.layout === 'classic'
+    ? `${home.essayCount ? '<a href="#essays">随笔</a>' : ''}${home.articleCount ? '<a href="#articles">文章</a>' : ''}`
+    : '';
 
   const header = compact
     ? `<header class="masthead masthead-compact">
@@ -424,10 +518,7 @@ function page(opts) {
     : `<header class="masthead">
   <div class="topline">
     <span>个人博客 / ${year}</span>
-    <nav aria-label="主导航">
-      ${home && home.essayCount ? '<a href="#essays">随笔</a>' : ''}
-      ${home && home.articleCount ? '<a href="#articles">文章</a>' : ''}
-    </nav>
+    ${navHtml ? `<nav aria-label="主导航">${navHtml}</nav>` : ''}
   </div>
   <h1><a href="${rootPrefix}index.html">${site.name || '我的博客'}</a></h1>
   <div class="subline">
@@ -445,9 +536,8 @@ function page(opts) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${title}</title>
 <style>
-${tplCss}
-${tweakCss}
 ${baseCss}
+${tweakCss}
 </style>
 </head>
 <body id="top">
@@ -554,54 +644,56 @@ const essays = posts.filter(p => p.isEssay).map((p) => {
 });
 const articles = posts.filter(p => !p.isEssay);
 
-// 列表页：最新一条 → 粉色主视觉；第 2～4 条按内容变成钴蓝面板/图文分栏/大图/短记；
-// 其余进「更早」双栏；文章单独用黑色横条。
+// 列表页：默认按时间顺序混排（timeline）；classic 走旧的杂志式分块排版
 const listBlocks = [];
 const gridItems = [];
 
-essays.forEach((e, i) => {
-  if (i === 0) {
-    listBlocks.push(renderHero(e));
-    return;
-  }
-  if (i === 1) {
-    listBlocks.push(e.images.length === 1 || e.images.length === 0 ? renderSplit(e) : renderWide(e));
-    return;
-  }
-  if (i === 2) {
-    listBlocks.push(e.images.length ? (e.images.length === 1 ? renderSplit(e) : renderWide(e)) : renderRant(e));
-    return;
-  }
-  if (i === 3 && e.images.length) {
-    listBlocks.push(renderWide(e));
-    return;
-  }
-  if (i === 3 && !e.images.length) {
-    listBlocks.push(renderRant(e));
-    return;
-  }
-  if (i === 4 && e.images.length) {
-    listBlocks.push(renderWide(e));
-    return;
-  }
-  if (i === 5 && e.images.length) {
-    listBlocks.push(renderWide(e));
-    return;
-  }
-  gridItems.push(e);
-});
+if (homeLayout === 'classic') {
+  essays.forEach((e, i) => {
+    if (i === 0) {
+      listBlocks.push(renderHero(e));
+      return;
+    }
+    if (i === 1) {
+      listBlocks.push(e.images.length === 1 || e.images.length === 0 ? renderSplit(e) : renderWide(e));
+      return;
+    }
+    if (i === 2) {
+      listBlocks.push(e.images.length ? (e.images.length === 1 ? renderSplit(e) : renderWide(e)) : renderRant(e));
+      return;
+    }
+    if (i === 3 && e.images.length) {
+      listBlocks.push(renderWide(e));
+      return;
+    }
+    if (i === 3 && !e.images.length) {
+      listBlocks.push(renderRant(e));
+      return;
+    }
+    if (i === 4 && e.images.length) {
+      listBlocks.push(renderWide(e));
+      return;
+    }
+    if (i === 5 && e.images.length) {
+      listBlocks.push(renderWide(e));
+      return;
+    }
+    gridItems.push(e);
+  });
+}
 
-const indexBody = [
-  ...listBlocks,
-  renderGrid(gridItems),
-  renderArticles(articles),
-].filter(Boolean).join('\n');
+const essayBySlug = new Map(essays.map((e) => [e.slug, e]));
+
+const indexBody = homeLayout === 'classic'
+  ? [...listBlocks, renderGrid(gridItems), renderArticles(articles)].filter(Boolean).join('\n')
+  : renderTimeline(posts, essayBySlug);
 
 const indexHtml = page({
   title: `${site.name || '我的博客'}${site.subtitle ? ' · ' + site.subtitle : ''}`,
   body: indexBody || '<p style="color:var(--muted)">还没有文章。在 content/ 目录新建 .md 文件即可。</p>',
   needsLightbox: true,
   home: {
+    layout: homeLayout,
     essayCount: essays.length,
     articleCount: articles.length,
     updated: dateDot(posts[0] ? posts[0].date : new Date().toISOString()),
@@ -614,12 +706,19 @@ for (const p of posts) {
   const raw = fs.readFileSync(path.join(contentDir, p.slug + '.md'), 'utf8');
   const rendered = fixImageSrc(md.render(raw), '../');
   // 随笔详情页：图片九宫格 + 灯箱；文章详情页：自然流展示
-  const bodyHtml = p.isEssay ? groupImages(rendered) : rendered;
+  let bodyHtml = p.isEssay ? groupImages(rendered) : rendered;
   const typeLabel = p.isEssay ? '随笔' : '文章';
   // 随笔标题就是文件名（常带日期数字），详情页标题改用类型 + 日期，更干净
   const pageHeading = p.isEssay ? `${typeLabel} · ${dateDot(p.date)}` : displayTitle(p.title);
+  // 文章详情页：正文前加标题；若正文开头有一级标题且与标题相同则去掉，避免重复
+  let titleHtml = '';
+  if (!p.isEssay) {
+    bodyHtml = bodyHtml.replace(new RegExp(`^<h1>${escapeRegExp(pageHeading)}</h1>\\s*`), '');
+    titleHtml = `<h1 class="post-title">《${pageHeading}》</h1>`;
+  }
   const postHtml = `<article class="post-full">
   <div class="entry-meta">${showDate ? `<time datetime="${p.date.slice(0, 10)}">${dateDot(p.date)}</time>` : ''}<span class="tag">${typeLabel}</span></div>
+  ${titleHtml}
   <div class="md-body">${bodyHtml}</div>
   <a class="back" href="../index.html">← 返回列表</a>
 </article>`;
@@ -635,6 +734,6 @@ for (const p of posts) {
   }));
 }
 
-console.log(`✔ 构建完成：${posts.length} 篇文章 + ${imgCount} 张图片 → dist/（模板：${tplName}）`);
+console.log(`✔ 构建完成：${posts.length} 篇文章 + ${imgCount} 张图片 → dist/`);
 console.log(`  - 列表页：index.html`);
 console.log(`  - 文章页：${posts.map(p => 'posts/' + p.slug + '.html').join('、')}`);
