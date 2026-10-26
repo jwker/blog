@@ -487,7 +487,7 @@ function renderTimeline(list, essayByFile) {
 function renameMap() {
   const map = new Map();
   try {
-    const log = execSync('git log --diff-filter=R --name-status --format= -M -- content/', { cwd: root, encoding: 'utf8' });
+    const log = execSync('git -c core.quotePath=false log --diff-filter=R --name-status --format= -M -- content/', { cwd: root, encoding: 'utf8' });
     for (const line of log.split('\n')) {
       const m = line.match(/^R\d+\t(.+)\t(.+)$/);
       if (m) map.set(m[2].trim(), m[1].trim());
@@ -829,7 +829,7 @@ for (const p of posts) {
     const oldSlug = slugOfPath(oldPath);
     if (oldSlug && oldSlug !== p.slug) {
       const target = `${encodeURI(p.slug)}.html`;
-      fs.writeFileSync(path.join(distDir, 'posts', `${encodeURI(oldSlug)}.html`), `<!DOCTYPE html>
+      fs.writeFileSync(path.join(distDir, 'posts', `${oldSlug}.html`), `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -850,4 +850,5 @@ for (const p of posts) {
 
 console.log(`✔ 构建完成：${posts.length} 篇文章 + ${imgCount} 张图片 → dist/`);
 console.log(`  - 列表页：index.html`);
+if (redirectCount) console.log(`  - 旧地址跳转页：${redirectCount} 个`);
 console.log(`  - 文章页：${posts.map(p => 'posts/' + p.slug + '.html').join('、')}`);
