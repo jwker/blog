@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>几种模型请求协议格式整理 · 小姜同学的日常</title>
+<style>
+
+:root{--bg:#f2efe4;--text:#151517;--muted:#5d5b53;--ink:var(--text);--paper:var(--bg);--pink:#ff4f7e;--cobalt:#2340c8;--card-bg:#151517;--card-fg:#f2efe4;--font-family:'Songti SC','Noto Serif SC','SimSun',serif;--font-size:17px;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-family,var(--serif));font-size:var(--font-size);line-height:1.9;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
+::selection{background:var(--pink);color:var(--ink);}
+a{color:inherit;text-decoration:none;}
+a:focus-visible,button:focus-visible{outline:3px solid var(--cobalt);outline-offset:3px;}
+img{max-width:100%;}
+.skip{position:absolute;left:-9999px;top:0;z-index:200;padding:10px 14px;border:2px solid var(--ink);background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:11px;}
+.skip:focus{left:12px;top:12px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.page{width:min(calc(100% - 64px),1180px);margin:0 auto;padding-bottom:8px;}
+
+/* 报头 */
+.masthead{padding-top:26px;}
+.topline{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding-bottom:14px;border-bottom:2px solid var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);}
+.topline nav{display:flex;gap:22px;white-space:nowrap;}
+.topline a:hover{color:var(--cobalt);}
+.masthead h1{display:inline-block;max-width:100%;margin:30px 0 0;padding:.02em .09em .07em;background:var(--cobalt);color:#fff;box-shadow:8px 8px 0 var(--pink);font-family:var(--sans);font-size:clamp(46px,10.5vw,128px);font-weight:900;line-height:.98;letter-spacing:-.035em;}
+.masthead h1 a{color:inherit;}
+
+/* 最新一条 */
+.hero{position:relative;margin-top:48px;padding:44px 46px 46px;border:2px solid var(--ink);background:var(--pink);color:#151517;box-shadow:9px 9px 0 var(--ink);overflow:hidden;cursor:pointer;}
+.hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(21,21,23,.5) .7px,transparent .9px);background-size:6px 6px;opacity:.14;pointer-events:none;}
+.hero::before{content:"“";position:absolute;top:-34px;right:22px;z-index:0;font-family:Georgia,"Times New Roman",serif;font-size:220px;line-height:1;color:var(--paper);opacity:.55;pointer-events:none;}
+.hero>*{position:relative;z-index:1;}
+.meta{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;}
+.hero-quote{margin:0;max-width:20em;font-family:var(--sans);font-size:clamp(27px,3.4vw,44px);font-weight:800;line-height:1.36;letter-spacing:-.01em;}
+.hero-quote p{margin:0 0 .45em;}
+.hero-quote p:last-child{margin-bottom:0;}
+.hero-quote a{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px;}
+.hero .hero-media{margin-top:26px;}
+
+/* 钴蓝面板 / 图文分栏 */
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center;margin-top:64px;cursor:pointer;}
+.split-solo{grid-template-columns:1fr;}
+.cobalt-panel{position:relative;padding:34px 36px 38px;border:2px solid var(--ink);background:var(--cobalt);color:#f2efe4;box-shadow:9px 9px 0 var(--pink);}
+.cobalt-panel .meta{color:rgba(242,239,228,.8);}
+.cobalt-panel .panel-text p{margin:0 0 .8em;font-family:var(--serif);font-size:20px;line-height:1.85;}
+.cobalt-panel .panel-text p:last-child{margin-bottom:0;}
+.cobalt-panel a{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
+.icon-card{margin:0;padding:18px 18px 14px;border:2px solid var(--ink);background:var(--paper);box-shadow:8px 8px 0 var(--ink);transform:rotate(-3deg);}
+.icon-card img{display:block;width:100%;height:auto;background:#fff;border:1.5px solid var(--ink);}
+.icon-card figcaption{margin-top:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);}
+
+/* 大图条目 */
+.wide-entry{margin-top:82px;cursor:pointer;}
+.entry-meta{display:flex;align-items:center;gap:14px;margin-bottom:16px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
+.entry-meta .tag{padding:4px 8px;border:1.5px solid var(--ink);background:var(--pink);font-size:9px;}
+.lede{margin:0 0 26px;max-width:24em;font-family:var(--sans);font-size:clamp(24px,2.6vw,32px);font-weight:800;line-height:1.45;letter-spacing:-.01em;}
+.lede p{margin:0 0 .45em;}
+.lede p:last-child{margin-bottom:0;}
+.diagram-frame{margin:0;padding:10px;border:2px solid var(--ink);background:#fff;box-shadow:10px 10px 0 var(--cobalt);}
+.diagram-frame img{display:block;width:100%;height:auto;}
+.diagram-frame img+img{margin-top:10px;}
+
+/* 短记 */
+.rant{margin-top:78px;padding:4px 0 4px 26px;border-left:6px solid var(--cobalt);max-width:820px;cursor:pointer;}
+.rant .entry-meta{margin-bottom:14px;}
+.rant-text p{margin:0 0 .8em;font-family:var(--serif);font-size:18px;line-height:2;}
+.rant-text p:last-child{margin-bottom:0;}
+
+/* 更早的记录 */
+.earlier{margin-top:84px;}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding-bottom:12px;border-bottom:2px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;}
+.section-head h2{margin:0;font-family:var(--mono);font-size:11px;font-weight:500;}
+.section-head h2::before{content:"";display:inline-block;width:9px;height:9px;margin-right:10px;background:var(--pink);}
+.section-head span{color:var(--muted);}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:48px;}
+.grid-item{padding:17px 0 21px;border-bottom:1.5px solid var(--ink);cursor:pointer;}
+.grid-item time{display:block;margin-bottom:8px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
+.grid-item:hover time{color:var(--cobalt);}
+.grid-text p{margin:0;font-size:17px;line-height:1.8;}
+.grid-media{margin-top:12px;}
+
+/* 文章 */
+.articles{margin-top:78px;display:grid;gap:28px;}
+.article-strip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--pink);transition:transform .15s ease;}
+.article-strip:hover{transform:translate(-2px,-2px);}
+.article-strip .label{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
+.article-strip h2{margin:0;font-family:var(--sans);font-size:clamp(19px,2.2vw,27px);font-weight:800;line-height:1.4;letter-spacing:-.01em;}
+.article-strip time{font-family:var(--mono);font-size:10px;color:rgba(242,239,228,.62);white-space:nowrap;}
+
+/* 分类筛选条 */
+.catbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:38px;padding-bottom:18px;border-bottom:2px solid var(--ink);}
+.catbar button{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);background:none;border:1.5px solid var(--ink);padding:5px 11px;cursor:pointer;}
+.catbar button span{opacity:.55;}
+.catbar button:hover{color:var(--cobalt);}
+.catbar button.on{background:var(--pink);color:var(--ink);}
+
+/* 首页时间轴：随笔与文章按时间顺序混排 */
+.timeline{margin-top:30px;}
+.entry{margin-bottom:30px;}
+.entry .date{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
+.essay{display:block;padding:4px 0 6px 22px;border-left:4px solid var(--pink);}
+.essay .meta{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.essay .tag{display:inline-block;padding:1px 7px;border:1.5px solid var(--pink);color:var(--cobalt);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
+.essay:hover .tag{background:var(--pink);color:var(--ink);}
+.essay .body p{margin:0 0 .8em;max-width:44em;font-size:17px;line-height:1.85;}
+.essay .body p:last-child{margin-bottom:0;}
+.essay .body a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
+.essay .img-grid-single img{max-height:420px;width:auto;max-width:100%;}
+.article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--cobalt);transition:transform .15s ease;}
+.article:hover{transform:translate(-2px,-2px);}
+.article .lead{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.article .lead .date{color:rgba(242,239,228,.55);}
+.article .tag{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
+.article .main{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.article .title{font-family:var(--sans);font-size:clamp(20px,2.3vw,28px);font-weight:800;line-height:1.35;letter-spacing:-.01em;}
+.article .excerpt{display:block;font-size:15px;line-height:1.7;color:rgba(242,239,228,.7);}
+.article .more{font-family:var(--mono);font-size:10px;letter-spacing:.08em;white-space:nowrap;color:var(--pink);}
+.article .more::before{content:"▸";margin-right:6px;}
+
+/* 页脚 */
+.foot{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-top:44px;padding:16px 0 36px;border-top:2px solid var(--ink);font-family:var(--mono);font-size:10px;color:var(--muted);}
+.foot a:hover{color:var(--cobalt);}
+
+/* 详情页 */
+.masthead-compact .topline{border-bottom-width:2px;}
+.post-main{padding-top:54px;}
+.post-full{max-width:900px;border-top:2px solid var(--ink);padding-top:26px;padding-bottom:8px;}
+.post-full .entry-meta{margin-bottom:30px;}
+.post-full .post-title{margin:0 0 26px;font-family:var(--sans);font-size:clamp(28px,4vw,42px);font-weight:900;line-height:1.25;letter-spacing:-.02em;}
+.post-full .post-title + .md-body > h1:first-child{margin-top:0;}
+.md-body{font-size:1em;}
+.md-body h1,.md-body h2,.md-body h3{font-family:var(--sans);line-height:1.4;letter-spacing:-.01em;margin:1.6em 0 .6em;}
+.md-body h1{font-size:1.65em;}
+.md-body h2{font-size:1.35em;}
+.md-body h3{font-size:1.15em;}
+.md-body p{margin:1em 0;}
+.md-body blockquote{margin:1.2em 0;padding:.2em 1em;border-left:6px solid var(--cobalt);color:var(--muted);}
+.md-body blockquote p{margin:.6em 0;}
+.md-body code{background:rgba(21,21,23,.07);padding:.15em .4em;border:1px solid rgba(21,21,23,.16);font-family:var(--mono);font-size:.86em;}
+.md-body pre{background:#fff;border:2px solid var(--ink);padding:14px 16px;box-shadow:6px 6px 0 var(--cobalt);overflow-x:auto;margin:1.2em 0;}
+.md-body pre code{background:none;border:none;padding:0;}
+.md-body img{max-width:100%;height:auto;border:2px solid var(--ink);background:#fff;padding:5px;box-shadow:7px 7px 0 var(--cobalt);}
+.md-body a{color:var(--cobalt);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
+.md-body ul,.md-body ol{margin:1em 0;padding-left:1.6em;}
+.md-body li{margin:.3em 0;}
+.md-body table{border-collapse:collapse;margin:1em 0;}
+.md-body th,.md-body td{border:1.5px solid var(--ink);padding:6px 12px;}
+.md-body th{background:var(--pink);font-family:var(--sans);}
+.md-body hr{border:none;border-top:2px solid var(--ink);margin:2em 0;}
+.back{display:inline-block;margin-top:40px;padding:8px 14px;border:2px solid var(--ink);background:var(--paper);font-family:var(--mono);font-size:10px;letter-spacing:.08em;box-shadow:4px 4px 0 var(--pink);}
+.back:hover{background:var(--pink);color:var(--ink);}
+
+/* 图片九宫格（朋友圈式：一行最多 3 个；正好 4 张时 2×2；单张显示大图）
+   尺寸沿用缩小后的规格：多图网格 50% 宽、单图 30% 宽 */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:1.2em 0;max-width:50%;}
+.img-grid img{width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--ink);background:#fff;padding:0;box-shadow:4px 4px 0 var(--cobalt);display:block;}
+.img-grid img:nth-child(2n){box-shadow:4px 4px 0 var(--pink);}
+.img-grid-4{grid-template-columns:repeat(2,1fr);}
+.img-grid-single{grid-template-columns:1fr;max-width:30%;}
+.img-grid-single img{aspect-ratio:auto;height:auto;object-fit:contain;box-shadow:6px 6px 0 var(--pink);}
+.hero .img-grid-single img{max-height:480px;width:auto;max-width:100%;}
+.grid-media{margin:12px 0 0;}
+
+/* 图片灯箱 */
+.lb{position:fixed;inset:0;z-index:99;background:rgba(21,21,23,.94);display:none;align-items:center;justify-content:center;}
+.lb.open{display:flex;}
+.lb img{max-width:92vw;max-height:92vh;border:3px solid var(--paper);background:#fff;box-shadow:10px 10px 0 var(--pink);}
+.lb-btn{position:absolute;color:var(--ink);background:var(--pink);border:2px solid var(--ink);border-radius:0;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer;z-index:2;font-family:var(--mono);}
+.lb-btn:active{background:var(--cobalt);color:var(--paper);}
+.lb-prev{left:12px;top:50%;transform:translateY(-50%);}
+.lb-next{right:12px;top:50%;transform:translateY(-50%);}
+.lb-close{right:12px;top:12px;font-size:18px;}
+
+@media (max-width:820px){
+  .page{width:min(calc(100% - 40px),700px);}
+  .split{grid-template-columns:1fr;gap:36px;}
+  .icon-card{width:min(100%,320px);justify-self:center;}
+  .grid{grid-template-columns:1fr;}
+  .article{grid-template-columns:1fr;gap:12px;align-items:start;}
+  .essay{padding-left:16px;}
+  .img-grid{max-width:100%;}
+  .img-grid-single{max-width:60%;}
+}
+@media (max-width:560px){
+  .topline{font-size:9px;}
+  .masthead h1{margin-top:22px;box-shadow:4px 4px 0 var(--pink);}
+  .hero{margin-top:34px;padding:28px 22px 30px;box-shadow:6px 6px 0 var(--ink);}
+  .hero::before{font-size:150px;top:-22px;right:8px;}
+  .hero-quote{font-size:26px;}
+  .split{margin-top:46px;}
+  .cobalt-panel{padding:26px 22px 30px;box-shadow:6px 6px 0 var(--pink);}
+  .cobalt-panel .panel-text p{font-size:18px;}
+  .wide-entry{margin-top:60px;}
+  .rant{margin-top:58px;padding-left:18px;border-left-width:5px;}
+  .rant-text p{font-size:16.5px;line-height:1.95;}
+  .diagram-frame{box-shadow:6px 6px 0 var(--cobalt);}
+  .earlier{margin-top:60px;}
+  .article-strip{grid-template-columns:1fr;gap:12px;padding:22px;box-shadow:6px 6px 0 var(--pink);}
+  .article-strip .label{justify-self:start;}
+  .article-strip time{white-space:normal;}
+  .foot{flex-direction:column;gap:8px;}
+  .img-grid{max-width:100%;gap:8px;}
+  .img-grid-single{max-width:60%;}
+  .hero .img-grid-single img{max-height:360px;}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
+
+
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">跳到正文</a>
+<div class="page">
+<header class="masthead masthead-compact">
+  <h1 class="sr-only">几种模型请求协议格式整理</h1>
+  <div class="topline">
+    <a href="../index.html">← 小姜同学的日常</a>
+    <span>技术 / 2026.10.27</span>
+  </div>
+</header>
+  <main id="main">
+<article class="post-full">
+  <div class="entry-meta"><time datetime="2026-10-27">2026.10.27</time><span class="tag">技术</span></div>
+  <h1 class="post-title">《几种模型请求协议格式整理》</h1>
+  <div class="md-body"><p>Chat Completions 是 2023 年 3 月随 gpt-3.5-turbo 出的，之后成了事实上的行业标准。Responses API 是 2025 年 3 月随 o3-mini / o4-mini 发<br>
+布的。OpenAI 内部把 Responses 当主线，第三方生态仍然以 Chat Completions 为主。</p>
+<p>“pi-ai”包中内置的模型目录关于协议支持的统计：</p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>模型数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>openai-completions</td>
+<td>720</td>
+</tr>
+<tr>
+<td>anthropic-messages</td>
+<td>401</td>
+</tr>
+<tr>
+<td>openai-responses</td>
+<td>132</td>
+</tr>
+</tbody>
+</table>
+<h2>1. Chat Completions（<code>openai-completions</code>）</h2>
+<p>OpenAI Chat Completions 是被最广泛实现的协议，多数「OpenAI 兼容」服务都是它的变体。</p>
+<h3>请求体顶层字段</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td>string</td>
+<td>模型名</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td>array</td>
+<td>消息列表，见下</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>array</td>
+<td>工具定义</td>
+</tr>
+<tr>
+<td><code>tool_choice</code></td>
+<td>string / object</td>
+<td>工具选择策略</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>number</td>
+<td>采样温度</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>number</td>
+<td>输出上限，兼容旧服务时用</td>
+</tr>
+<tr>
+<td><code>max_completion_tokens</code></td>
+<td>number</td>
+<td>输出上限，新版规范字段，与 <code>max_tokens</code> 二选一</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>boolean</td>
+<td>是否流式</td>
+</tr>
+<tr>
+<td><code>stream_options</code></td>
+<td>object</td>
+<td>常用 <code>{&quot;include_usage&quot;: true}</code></td>
+</tr>
+<tr>
+<td><code>store</code></td>
+<td>boolean</td>
+<td>是否存储本次响应</td>
+</tr>
+<tr>
+<td><code>stop</code></td>
+<td>string / array</td>
+<td>停止序列</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td>number</td>
+<td>核采样</td>
+</tr>
+<tr>
+<td><code>frequency_penalty</code></td>
+<td>number</td>
+<td>频率惩罚</td>
+</tr>
+<tr>
+<td><code>presence_penalty</code></td>
+<td>number</td>
+<td>存在惩罚</td>
+</tr>
+<tr>
+<td><code>response_format</code></td>
+<td>object</td>
+<td>结构化输出</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>number</td>
+<td>随机种子</td>
+</tr>
+<tr>
+<td><code>parallel_tool_calls</code></td>
+<td>boolean</td>
+<td>是否允许并行工具调用</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>object</td>
+<td>附加元数据</td>
+</tr>
+<tr>
+<td><code>service_tier</code></td>
+<td>string</td>
+<td>服务档位</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>string</td>
+<td>终端用户标识</td>
+</tr>
+<tr>
+<td><code>reasoning_effort</code></td>
+<td>string</td>
+<td>思考强度，见扩展字段一节</td>
+</tr>
+<tr>
+<td><code>prompt_cache_key</code></td>
+<td>string</td>
+<td>提示缓存键</td>
+</tr>
+<tr>
+<td><code>prompt_cache_retention</code></td>
+<td>string</td>
+<td>缓存保留时长，如 <code>&quot;24h&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h3>消息条目</h3>
+<table>
+<thead>
+<tr>
+<th>role</th>
+<th>关键字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system</code></td>
+<td><code>content</code></td>
+<td>系统指令，字符串</td>
+</tr>
+<tr>
+<td><code>developer</code></td>
+<td><code>content</code></td>
+<td>开发者指令，与 <code>system</code> 语义相近但优先级更高，用于推理模型</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td><code>content</code></td>
+<td>字符串，或含图片的块数组</td>
+</tr>
+<tr>
+<td><code>assistant</code></td>
+<td><code>content</code>、<code>tool_calls</code></td>
+<td>模型输出；<code>content</code> 是字符串或 <code>null</code></td>
+</tr>
+<tr>
+<td><code>tool</code></td>
+<td><code>tool_call_id</code>、<code>content</code></td>
+<td>工具结果；部分服务还要求 <code>name</code> 标明工具名</td>
+</tr>
+</tbody>
+</table>
+<p>请求体：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;gpt-4o&quot;,
+    &quot;stream&quot;: true,
+    &quot;stream_options&quot;: {
+        &quot;include_usage&quot;: true
+    },
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;system&quot;,
+            &quot;content&quot;: &quot;你是一个编码助手。&quot;
+        },
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;读一下 a.ts&quot;
+        },
+        {
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: null,
+            &quot;tool_calls&quot;: [
+                {
+                    &quot;id&quot;: &quot;call_1&quot;,
+                    &quot;type&quot;: &quot;function&quot;,
+                    &quot;function&quot;: {
+                        &quot;name&quot;: &quot;read&quot;,
+                        &quot;arguments&quot;: &quot;{\&quot;path\&quot;:\&quot;a.ts\&quot;}&quot;
+                    }
+                }
+            ]
+        },
+        {
+            &quot;role&quot;: &quot;tool&quot;,
+            &quot;tool_call_id&quot;: &quot;call_1&quot;,
+            &quot;content&quot;: &quot;export const a = 1;&quot;
+        }
+    ],
+    &quot;tools&quot;: [
+        {
+            &quot;type&quot;: &quot;function&quot;,
+            &quot;function&quot;: {
+                &quot;name&quot;: &quot;read&quot;,
+                &quot;description&quot;: &quot;读取文件&quot;,
+                &quot;parameters&quot;: {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {
+                        &quot;path&quot;: {
+                            &quot;type&quot;: &quot;string&quot;
+                        }
+                    },
+                    &quot;required&quot;: [
+                        &quot;path&quot;
+                    ]
+                }
+            }
+        }
+    ]
+}
+</code></pre>
+<h3>内容块</h3>
+<p>用户消息带图片时 <code>content</code> 变成块数组，块类型是 <code>text</code> 和 <code>image_url</code>：</p>
+<pre><code class="language-json">{
+    &quot;role&quot;: &quot;user&quot;,
+    &quot;content&quot;: [
+        {
+            &quot;type&quot;: &quot;text&quot;,
+            &quot;text&quot;: &quot;看这张图&quot;
+        },
+        {
+            &quot;type&quot;: &quot;image_url&quot;,
+            &quot;image_url&quot;: {
+                &quot;url&quot;: &quot;data:image/png;base64,iVBORw0KGgo...&quot;
+            }
+        }
+    ]
+}
+</code></pre>
+<h3>规范外的扩展字段</h3>
+<p>Chat Completions 的规范里没有思考内容的位置。</p>
+<p>但各家服务商会自己加扩展字段：</p>
+<p><strong>开关方向</strong>——写在请求体里，告诉服务端「这次要不要思考、思考到什么程度」。这类字段只出现在请求里，响应里没有。</p>
+<p><strong>载荷方向</strong>——服务端在响应里用它把思考正文送回来。这类字段出现在响应的 delta 里；下一轮把历史发回去时，还要用同一个字段名把它带回去。</p>
+<p>两类字段的分工：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>出现方向</th>
+<th>形态</th>
+<th>作用</th>
+<th>常见于</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reasoning_effort</code></td>
+<td>请求</td>
+<td>string</td>
+<td>设定思考强度，取值 <code>minimal</code> / <code>low</code> / <code>medium</code> / <code>high</code></td>
+<td>OpenAI 风格的推理服务</td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td>请求</td>
+<td><code>{&quot;effort&quot;: &quot;...&quot;}</code></td>
+<td>设定思考强度</td>
+<td>OpenRouter、Together、Ant-Ling</td>
+</tr>
+<tr>
+<td><code>thinking</code></td>
+<td>请求</td>
+<td><code>{&quot;type&quot;: &quot;enabled&quot; | &quot;disabled&quot;}</code></td>
+<td>开关思考</td>
+<td>DeepSeek、<a href="http://Z.AI">Z.AI</a></td>
+</tr>
+<tr>
+<td><code>thinking</code></td>
+<td>请求</td>
+<td>string</td>
+<td>直接把思考等级写成字符串</td>
+<td>某类把等级当字符串传的服务</td>
+</tr>
+<tr>
+<td><code>enable_thinking</code></td>
+<td>请求</td>
+<td>boolean</td>
+<td>开关思考</td>
+<td>Qwen</td>
+</tr>
+<tr>
+<td><code>chat_template_kwargs</code></td>
+<td>请求</td>
+<td>object</td>
+<td>开关思考，常见 <code>{&quot;enable_thinking&quot;: true, &quot;preserve_thinking&quot;: true}</code></td>
+<td>走 chat template 的服务</td>
+</tr>
+<tr>
+<td><code>chat_template_args</code></td>
+<td>请求</td>
+<td>object</td>
+<td>同上，字段名不同的变体</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>reasoning_content</code></td>
+<td>响应</td>
+<td>string</td>
+<td>承载思考正文</td>
+<td>DeepSeek，以及大量 OpenAI 兼容服务</td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td>响应</td>
+<td>string</td>
+<td>承载思考正文</td>
+<td>llama.cpp 等本地推理服务</td>
+</tr>
+<tr>
+<td><code>reasoning_text</code></td>
+<td>响应</td>
+<td>string</td>
+<td>承载思考正文</td>
+<td>另一类服务的叫法</td>
+</tr>
+<tr>
+<td><code>reasoning_details</code></td>
+<td>响应</td>
+<td>array of object</td>
+<td>承载思考正文，结构化条目</td>
+<td>OpenRouter</td>
+</tr>
+</tbody>
+</table>
+<p>注意 <code>reasoning</code> 这个名字在两个方向上都有，形态还不一样：请求里是 <code>{&quot;effort&quot;: &quot;high&quot;}</code> 用来调档位，响应里是字符串用来装正文。别混用。</p>
+<p>一轮对话里这三个环节连起来是这样：</p>
+<p>第一步，请求体里放开关字段，决定这次思考的强度：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;deepseek-chat&quot;,
+    &quot;reasoning_effort&quot;: &quot;high&quot;,
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;读一下 a.ts&quot;
+        }
+    ]
+}
+</code></pre>
+<p>第二步，响应的 delta 里，思考正文放在载荷字段里：</p>
+<pre><code class="language-json">{
+    &quot;choices&quot;: [
+        {
+            &quot;delta&quot;: {
+                &quot;reasoning_content&quot;: &quot;先读文件。&quot;
+            }
+        }
+    ]
+}
+</code></pre>
+<p>第三步，下一轮把历史发回去，思考正文要用同一个载荷字段带回，放在 assistant 消息上：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;deepseek-chat&quot;,
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;读一下 a.ts&quot;
+        },
+        {
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: &quot;我先读一下文件。&quot;,
+            &quot;reasoning_content&quot;: &quot;先读文件。&quot;
+        }
+    ]
+}
+</code></pre>
+<p>第三步就是容易困惑的地方：回传的字段名是「载荷方向」那个名字，但它出现在请求体里。因为服务端要求思考内容原样回传，字段名必须和第二步响应里用的完全一致，用错名字推理链就断了。</p>
+<p>对不支持思考的服务，上面三个环节都省掉，请求里不放开关字段，响应里也没有思考正文。</p>
+<p>另外几个非规范字段：<code>tool_stream</code>（布尔，部分服务用它开启工具调用流式返回）、<code>priority</code>（vLLM 的优先级）、<code>cache_control</code>（Anthropic 风格的缓存标记，经 LiteLLM 之类的网关透传）、<code>provider</code> 与 <code>providerOptions</code>（OpenRouter 与 Vercel AI Gateway 的路由偏好）。</p>
+<h3>约束</h3>
+<p><code>assistant.content</code> 是字符串或 <code>null</code>，不是块数组。发块数组有些服务会原样模仿结构产出嵌套结果。</p>
+<p>工具调用的 <code>arguments</code> 是 JSON 字符串，不是对象。</p>
+<p>工具结果消息只承载文本。工具返回图片时，图片需要另发一条 <code>user</code> 消息承载，常见前缀是 <code>Attached image(s) from tool result:</code>。</p>
+<h3>工具结果带图片时的消息序列</h3>
+<p>工具同时返回文本和图片时，文本留在 <code>tool</code> 消息里，图片另起一条 <code>user</code> 消息。四条消息构成一次完整的往返：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;gpt-4o&quot;,
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;把截图里的数字读出来&quot;
+        },
+        {
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: null,
+            &quot;tool_calls&quot;: [
+                {
+                    &quot;id&quot;: &quot;call_1&quot;,
+                    &quot;type&quot;: &quot;function&quot;,
+                    &quot;function&quot;: {
+                        &quot;name&quot;: &quot;screenshot&quot;,
+                        &quot;arguments&quot;: &quot;{\&quot;path\&quot;:\&quot;shot.png\&quot;}&quot;
+                    }
+                }
+            ]
+        },
+        {
+            &quot;role&quot;: &quot;tool&quot;,
+            &quot;tool_call_id&quot;: &quot;call_1&quot;,
+            &quot;content&quot;: &quot;已截取屏幕，尺寸 1920x1080。&quot;
+        },
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;text&quot;,
+                    &quot;text&quot;: &quot;Attached image(s) from tool result:&quot;
+                },
+                {
+                    &quot;type&quot;: &quot;image_url&quot;,
+                    &quot;image_url&quot;: {
+                        &quot;url&quot;: &quot;data:image/png;base64,iVBORw0KGgo...&quot;
+                    }
+                }
+            ]
+        }
+    ]
+}
+</code></pre>
+<p>如果工具只返回图片、没有文本，<code>tool</code> 消息仍然必须存在，用占位串撑住这条消息：</p>
+<pre><code class="language-json">{
+    &quot;role&quot;: &quot;tool&quot;,
+    &quot;tool_call_id&quot;: &quot;call_1&quot;,
+    &quot;content&quot;: &quot;(see attached image)&quot;
+}
+</code></pre>
+<p>有些服务要求 <code>tool</code> 消息额外带 <code>name</code> 字段标明是哪个工具的结果：</p>
+<pre><code class="language-json">{
+    &quot;role&quot;: &quot;tool&quot;,
+    &quot;tool_call_id&quot;: &quot;call_1&quot;,
+    &quot;name&quot;: &quot;screenshot&quot;,
+    &quot;content&quot;: &quot;已截取屏幕，尺寸 1920x1080。&quot;
+}
+</code></pre>
+<h2>2. OpenAI Responses（<code>openai-responses</code>）</h2>
+<p>OpenAI 较新的协议。消息字段叫 <code>input</code>，元素是 item 数组，用 <code>type</code> 区分种类。</p>
+<h3>请求体顶层字段</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td>string</td>
+<td>模型名</td>
+</tr>
+<tr>
+<td><code>input</code></td>
+<td>array</td>
+<td>item 列表，见下</td>
+</tr>
+<tr>
+<td><code>instructions</code></td>
+<td>string</td>
+<td>独立的指令字段，等价于开头的 developer 消息</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>array</td>
+<td>工具定义</td>
+</tr>
+<tr>
+<td><code>tool_choice</code></td>
+<td>string / object</td>
+<td>工具选择策略</td>
+</tr>
+<tr>
+<td><code>max_output_tokens</code></td>
+<td>number</td>
+<td>输出上限</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>number</td>
+<td>采样温度</td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td>object</td>
+<td><code>{&quot;effort&quot;: &quot;...&quot;, &quot;summary&quot;: &quot;auto&quot;}</code></td>
+</tr>
+<tr>
+<td><code>include</code></td>
+<td>array of string</td>
+<td>常用 <code>[&quot;reasoning.encrypted_content&quot;]</code></td>
+</tr>
+<tr>
+<td><code>store</code></td>
+<td>boolean</td>
+<td>是否存储响应</td>
+</tr>
+<tr>
+<td><code>previous_response_id</code></td>
+<td>string</td>
+<td>接着上一次响应继续</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>object</td>
+<td><code>{&quot;format&quot;: {...}}</code> 结构化输出</td>
+</tr>
+<tr>
+<td><code>truncation</code></td>
+<td>string</td>
+<td>上下文超长时的截断策略</td>
+</tr>
+<tr>
+<td><code>service_tier</code></td>
+<td>string</td>
+<td>服务档位</td>
+</tr>
+<tr>
+<td><code>parallel_tool_calls</code></td>
+<td>boolean</td>
+<td>是否允许并行工具调用</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>object</td>
+<td>附加元数据</td>
+</tr>
+<tr>
+<td><code>prompt_cache_key</code></td>
+<td>string</td>
+<td>提示缓存键</td>
+</tr>
+<tr>
+<td><code>prompt_cache_retention</code></td>
+<td>string</td>
+<td>缓存保留时长</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>boolean</td>
+<td>异步任务模式</td>
+</tr>
+</tbody>
+</table>
+<p>请求体：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;gpt-5&quot;,
+    &quot;stream&quot;: true,
+    &quot;store&quot;: false,
+    &quot;reasoning&quot;: {
+        &quot;effort&quot;: &quot;medium&quot;,
+        &quot;summary&quot;: &quot;auto&quot;
+    },
+    &quot;include&quot;: [
+        &quot;reasoning.encrypted_content&quot;
+    ],
+    &quot;input&quot;: [
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;input_text&quot;,
+                    &quot;text&quot;: &quot;读一下 a.ts&quot;
+                }
+            ]
+        },
+        {
+            &quot;type&quot;: &quot;message&quot;,
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;output_text&quot;,
+                    &quot;text&quot;: &quot;我先读一下文件。&quot;,
+                    &quot;annotations&quot;: []
+                }
+            ],
+            &quot;status&quot;: &quot;completed&quot;,
+            &quot;id&quot;: &quot;msg_abc&quot;
+        },
+        {
+            &quot;type&quot;: &quot;function_call&quot;,
+            &quot;id&quot;: &quot;fc_abc&quot;,
+            &quot;call_id&quot;: &quot;call_1&quot;,
+            &quot;name&quot;: &quot;read&quot;,
+            &quot;arguments&quot;: &quot;{\&quot;path\&quot;:\&quot;a.ts\&quot;}&quot;
+        },
+        {
+            &quot;type&quot;: &quot;function_call_output&quot;,
+            &quot;call_id&quot;: &quot;call_1&quot;,
+            &quot;output&quot;: &quot;export const a = 1;&quot;
+        }
+    ],
+    &quot;tools&quot;: [
+        {
+            &quot;type&quot;: &quot;function&quot;,
+            &quot;name&quot;: &quot;read&quot;,
+            &quot;description&quot;: &quot;读取文件&quot;,
+            &quot;parameters&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;properties&quot;: {
+                    &quot;path&quot;: {
+                        &quot;type&quot;: &quot;string&quot;
+                    }
+                },
+                &quot;required&quot;: [
+                    &quot;path&quot;
+                ]
+            },
+            &quot;strict&quot;: false
+        }
+    ]
+}
+</code></pre>
+<h3>item 类型</h3>
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>关键字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message</code></td>
+<td><code>role</code>、<code>content</code>、<code>status</code>、<code>id</code></td>
+<td>普通消息，<code>role</code> 为 <code>user</code> 或 <code>assistant</code></td>
+</tr>
+<tr>
+<td><code>function_call</code></td>
+<td><code>id</code>、<code>call_id</code>、<code>name</code>、<code>arguments</code></td>
+<td>工具调用，<code>arguments</code> 是 JSON 字符串</td>
+</tr>
+<tr>
+<td><code>function_call_output</code></td>
+<td><code>call_id</code>、<code>output</code></td>
+<td>工具结果</td>
+</tr>
+<tr>
+<td><code>custom_tool_call</code></td>
+<td><code>id</code>、<code>call_id</code>、<code>name</code>、<code>input</code></td>
+<td>自定义语法工具的调用</td>
+</tr>
+<tr>
+<td><code>custom_tool_call_output</code></td>
+<td><code>call_id</code>、<code>output</code></td>
+<td>对应的结果</td>
+</tr>
+<tr>
+<td><code>reasoning</code></td>
+<td><code>id</code>、<code>summary</code>、<code>encrypted_content</code></td>
+<td>推理条目</td>
+</tr>
+<tr>
+<td><code>computer_call</code></td>
+<td><code>call_id</code>、<code>action</code></td>
+<td>计算机操作</td>
+</tr>
+<tr>
+<td><code>web_search_call</code></td>
+<td><code>id</code>、<code>status</code></td>
+<td>内置网页搜索</td>
+</tr>
+<tr>
+<td><code>file_search_call</code></td>
+<td><code>id</code>、<code>queries</code></td>
+<td>内置文件检索</td>
+</tr>
+<tr>
+<td><code>image_generation_call</code></td>
+<td><code>id</code>、<code>result</code></td>
+<td>内置图像生成</td>
+</tr>
+<tr>
+<td><code>mcp_call</code></td>
+<td><code>id</code>、<code>name</code>、<code>arguments</code></td>
+<td>MCP 服务调用</td>
+</tr>
+<tr>
+<td><code>item_reference</code></td>
+<td><code>id</code></td>
+<td>引用此前某个 item</td>
+</tr>
+</tbody>
+</table>
+<h3>内容块类型</h3>
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>出现位置</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input_text</code></td>
+<td>user 消息</td>
+<td>输入文本</td>
+</tr>
+<tr>
+<td><code>input_image</code></td>
+<td>user 消息</td>
+<td>输入图片，<code>image_url</code> 带 data URL，<code>detail</code> 取 <code>auto</code> / <code>low</code> / <code>high</code></td>
+</tr>
+<tr>
+<td><code>output_text</code></td>
+<td>assistant 消息</td>
+<td>输出文本，带 <code>annotations</code> 数组</td>
+</tr>
+<tr>
+<td><code>refusal</code></td>
+<td>assistant 消息</td>
+<td>拒答</td>
+</tr>
+<tr>
+<td><code>summary_text</code></td>
+<td>reasoning 摘要</td>
+<td>推理摘要文本</td>
+</tr>
+</tbody>
+</table>
+<h3>推理条目的回放</h3>
+<p>Responses 是五种协议里唯一把思考做成独立 item 的。<code>reasoning</code> item 里 <code>encrypted_content</code> 是加密的思考内容，<code>include</code> 里加上 <code>reasoning.encrypted_content</code> 才会返回它。</p>
+<p>多轮回放时，<code>reasoning</code> item 要原样放进 <code>input</code>，服务端才能接上推理链。</p>
+<h3>id 与 call_id 的区别</h3>
+<p><code>call_id</code> 用于把结果和调用配对，<code>id</code> 是 item 自身的标识。<code>function_call</code> 的 <code>id</code> 必须以 <code>fc_</code> 开头，<code>custom_tool_call</code> 必须以 <code>ctc_</code> 开头。<code>function_call_output</code> 只带 <code>call_id</code>。</p>
+<p>跨模型复用历史时不要带 <code>id</code>，否则会触发服务端的 id 配对校验。</p>
+<h2>3. Anthropic Messages（<code>anthropic-messages</code>）</h2>
+<p><code>system</code> 是独立字段，不混在消息里。<code>messages</code> 只有 <code>user</code> 和 <code>assistant</code> 两种 role。</p>
+<p>有一个例外要注意：当模型开启了「支持对话中途的系统消息」这一能力时，后续的系统提示更新会以 <code>role: &quot;system&quot;</code> 的消息出现在 <code>messages</code> 数组里。这类消息不是 Anthropic 规范的一部分，是客户端的扩展用法，只有部分模型接受——不接受的话客户端会把所有系统消息合并成一条放到最前面。</p>
+<p>在Chat Completions下因为messages有system类型，所以可以在对话中途插入调整的系统提示次，但在Anthropic Messages不建议这么做，除非能确保使用到<code>role: &quot;system&quot;</code>。必要的话可以使用<code>role: &quot;user&quot;</code>插入。</p>
+<h3>请求体顶层字段</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td>string</td>
+<td>模型名</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td>number</td>
+<td>必填，输出上限</td>
+</tr>
+<tr>
+<td><code>system</code></td>
+<td>string / array</td>
+<td>系统提示，块数组时块类型为 <code>text</code></td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td>array</td>
+<td>消息列表</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>array</td>
+<td>工具定义</td>
+</tr>
+<tr>
+<td><code>tool_choice</code></td>
+<td>object</td>
+<td><code>{&quot;type&quot;: &quot;auto&quot; | &quot;any&quot; | &quot;tool&quot;, &quot;name&quot;: &quot;...&quot;}</code></td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>number</td>
+<td>采样温度</td>
+</tr>
+<tr>
+<td><code>top_p</code></td>
+<td>number</td>
+<td>核采样</td>
+</tr>
+<tr>
+<td><code>top_k</code></td>
+<td>number</td>
+<td>候选数限制</td>
+</tr>
+<tr>
+<td><code>stop_sequences</code></td>
+<td>array of string</td>
+<td>停止序列</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>boolean</td>
+<td>是否流式</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>object</td>
+<td><code>{&quot;user_id&quot;: &quot;...&quot;}</code></td>
+</tr>
+<tr>
+<td><code>service_tier</code></td>
+<td>string</td>
+<td>服务档位</td>
+</tr>
+<tr>
+<td><code>thinking</code></td>
+<td>object</td>
+<td><code>{&quot;type&quot;: &quot;enabled&quot; | &quot;disabled&quot; | &quot;adaptive&quot;, &quot;budget_tokens&quot;: 1024, &quot;display&quot;: &quot;summarized&quot;}</code></td>
+</tr>
+<tr>
+<td><code>output_config</code></td>
+<td>object</td>
+<td><code>{&quot;effort&quot;: &quot;high&quot;}</code></td>
+</tr>
+<tr>
+<td><code>betas</code></td>
+<td>array of string</td>
+<td>灰度特性开关</td>
+</tr>
+<tr>
+<td><code>fallbacks</code></td>
+<td>array of object</td>
+<td>备用模型列表</td>
+</tr>
+</tbody>
+</table>
+<p>请求体：</p>
+<pre><code class="language-json">{
+    &quot;model&quot;: &quot;claude-sonnet-4&quot;,
+    &quot;max_tokens&quot;: 8192,
+    &quot;stream&quot;: true,
+    &quot;system&quot;: [
+        {
+            &quot;type&quot;: &quot;text&quot;,
+            &quot;text&quot;: &quot;你是一个编码助手。&quot;
+        }
+    ],
+    &quot;thinking&quot;: {
+        &quot;type&quot;: &quot;enabled&quot;,
+        &quot;budget_tokens&quot;: 2048,
+        &quot;display&quot;: &quot;summarized&quot;
+    },
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;text&quot;,
+                    &quot;text&quot;: &quot;读一下 a.ts&quot;
+                }
+            ]
+        },
+        {
+            &quot;role&quot;: &quot;assistant&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;thinking&quot;,
+                    &quot;thinking&quot;: &quot;先读文件。&quot;,
+                    &quot;signature&quot;: &quot;EqQBCgIYAh...&quot;
+                },
+                {
+                    &quot;type&quot;: &quot;text&quot;,
+                    &quot;text&quot;: &quot;我先读一下文件。&quot;
+                },
+                {
+                    &quot;type&quot;: &quot;tool_use&quot;,
+                    &quot;id&quot;: &quot;toolu_1&quot;,
+                    &quot;name&quot;: &quot;read&quot;,
+                    &quot;input&quot;: {
+                        &quot;path&quot;: &quot;a.ts&quot;
+                    }
+                }
+            ]
+        },
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {
+                    &quot;type&quot;: &quot;tool_result&quot;,
+                    &quot;tool_use_id&quot;: &quot;toolu_1&quot;,
+                    &quot;content&quot;: &quot;export const a = 1;&quot;,
+                    &quot;is_error&quot;: false
+                }
+            ]
+        }
+    ],
+    &quot;tools&quot;: [
+        {
+            &quot;name&quot;: &quot;read&quot;,
+            &quot;description&quot;: &quot;读取文件&quot;,
+            &quot;input_schema&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;properties&quot;: {
+                    &quot;path&quot;: {
+                        &quot;type&quot;: &quot;string&quot;
+                    }
+                },
+                &quot;required&quot;: [
+                    &quot;path&quot;
+                ]
+            }
+        }
+    ]
+}
+</code></pre>
+<h3>内容块类型</h3>
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>关键字段</th>
+<th>出现位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td><code>text</code></td>
+<td>user、assistant、system</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td><code>source</code></td>
+<td>user</td>
+</tr>
+<tr>
+<td><code>document</code></td>
+<td><code>source</code></td>
+<td>user</td>
+</tr>
+<tr>
+<td><code>tool_use</code></td>
+<td><code>id</code>、<code>name</code>、<code>input</code></td>
+<td>assistant</td>
+</tr>
+<tr>
+<td><code>tool_result</code></td>
+<td><code>tool_use_id</code>、<code>content</code>、<code>is_error</code></td>
+<td>user</td>
+</tr>
+<tr>
+<td><code>thinking</code></td>
+<td><code>thinking</code>、<code>signature</code></td>
+<td>assistant</td>
+</tr>
+<tr>
+<td><code>redacted_thinking</code></td>
+<td><code>data</code></td>
+<td>assistant</td>
+</tr>
+<tr>
+<td><code>server_tool_use</code></td>
+<td><code>id</code>、<code>name</code>、<code>input</code></td>
+<td>assistant</td>
+</tr>
+<tr>
+<td><code>web_search_tool_result</code></td>
+<td><code>tool_use_id</code>、<code>content</code></td>
+<td>user</td>
+</tr>
+</tbody>
+</table>
+<p>图片块：</p>
+<pre><code class="language-json">{
+    &quot;type&quot;: &quot;image&quot;,
+    &quot;source&quot;: {
+        &quot;type&quot;: &quot;base64&quot;,
+        &quot;media_type&quot;: &quot;image/png&quot;,
+        &quot;data&quot;: &quot;iVBORw0KGgo...&quot;
+    }
+}
+</code></pre>
+<h3>扩展字段</h3>
+<p><code>cache_control</code> 是 Anthropic 自己的扩展机制，标在需要缓存的块上：</p>
+<pre><code class="language-json">{
+    &quot;type&quot;: &quot;text&quot;,
+    &quot;text&quot;: &quot;很长的系统提示……&quot;,
+    &quot;cache_control&quot;: {
+        &quot;type&quot;: &quot;ephemeral&quot;
+    }
+}
+</code></pre>
+<p>它可以出现在 system 块、text 块、工具定义上。一个请求里通常只标一到两处，标记之后的上下文会被缓存。</p>
+<p><code>tool_addition</code> 和 <code>tool_removal</code> 是较新的工具动态变更块，出现在 system 消息里，用于在对话中途增删工具。</p>
+<p><code>fallbacks</code> 让模型出错时自动切到备用模型。</p>
+<h3>约束</h3>
+<p>工具结果必须紧跟对应的工具调用。<code>tool_result</code> 放在 user 消息里，且这条 user 消息要紧跟在含 <code>tool_use</code> 的 assistant 消息之后，中间插入其他内容会被拒绝。</p>
+<p>思考块必须带 <code>signature</code> 原样回传。签名是服务端给的加密凭据，丢掉它就等于丢掉推理链。被安全策略屏蔽的思考会变成 <code>redacted_thinking</code> 块，<code>data</code> 里是不透明载荷。</p>
+<p>工具结果的内容是字符串或块数组。错误结果里不能混图片。</p>
+</div>
+  <a class="back" href="../index.html">← 返回列表</a>
+</article>
+  </main>
+  <footer class="foot">
+    <span>© 2026 小姜同学的日常</span>
+    <a href="#top">回到顶部</a>
+  </footer>
+</div>
+
+
+</body>
+</html>
