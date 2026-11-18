@@ -54,13 +54,13 @@ img{max-width:100%;}
 
 /* 页面骨架 */
 .site{max-width:680px;margin:0 auto;padding:0 24px 40px;}
-.site-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:22px;margin:0 -24px;padding:19px 24px;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
-.site-name{font-size:14px;font-weight:500;letter-spacing:.01em;white-space:nowrap;}
-.site-nav{display:flex;gap:18px;min-width:0;overflow-x:auto;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);scrollbar-width:none;}
-.site-nav::-webkit-scrollbar{display:none;}
-.site-nav button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;white-space:nowrap;}
-.site-nav button:hover{color:var(--text);}
-.site-nav button.on{color:var(--text);}
+.site-top{position:sticky;top:0;z-index:20;margin:0 -24px;padding:16px 24px 13px;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.site-top-home{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.site-top-compact{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:19px 24px;}
+.site-name{font-size:14px;font-weight:500;line-height:1.4;letter-spacing:.01em;white-space:nowrap;}
+.site-nav{display:flex;flex-wrap:wrap;width:100%;gap:6px 18px;font-family:var(--sans);font-size:12px;line-height:1.4;letter-spacing:.02em;color:var(--text);}
+.site-nav button{font:inherit;letter-spacing:inherit;color:inherit;opacity:.6;background:none;border:0;padding:0;cursor:pointer;white-space:nowrap;transition:opacity .15s ease;}
+.site-nav button:hover,.site-nav button.on{opacity:1;}
 .site-meta{font-family:var(--mono);font-size:9px;letter-spacing:.11em;color:var(--muted);white-space:nowrap;}
 
 /* 首页单列流 */
@@ -133,9 +133,10 @@ img{max-width:100%;}
 
 @media (max-width:600px){
   .site{padding:0 20px 32px;}
-  .site-top{margin:0 -20px;padding:16px 20px;gap:14px;}
+  .site-top{margin:0 -20px;padding:14px 20px 12px;}
+  .site-top-compact{padding:16px 20px;}
   .site-name{font-size:13px;}
-  .site-nav{gap:12px;font-size:8px;letter-spacing:.06em;}
+  .site-nav{width:100%;gap:5px 16px;font-size:12px;letter-spacing:.01em;}
   .site-meta{font-size:8px;}
   .entry{padding:34px 0 36px;}
   .entry:first-child{padding-top:30px;}
@@ -232,7 +233,7 @@ function renderCatBar(categories) {
   const buttons = categories
     .map((c, i) => {
       const cat = c.name === '全部' ? '*' : c.name;
-      return `<button type="button" data-cat="${esc(cat)}"${i === 0 ? ' class="on"' : ''}>${esc(c.name)}</button>`;
+      return `<button type="button" data-cat="${esc(cat)}" aria-pressed="${i === 0 ? 'true' : 'false'}"${i === 0 ? ' class="on"' : ''}>${esc(c.name)}</button>`;
     })
     .join('\n      ');
   return `<nav class="site-nav" id="catbar" aria-label="分类筛选">
@@ -384,12 +385,15 @@ function page(opts) {
   var bar = document.getElementById('catbar');
   if (!bar) return;
   var entries = Array.prototype.slice.call(document.querySelectorAll('.entry'));
+
   bar.addEventListener('click', function(ev){
     var btn = ev.target.closest('button');
     if (!btn) return;
     var cat = btn.getAttribute('data-cat');
     Array.prototype.forEach.call(bar.querySelectorAll('button'), function(b){
-      b.classList.toggle('on', b === btn);
+      var on = b === btn;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     entries.forEach(function(e){
       e.style.display = (cat === '*' || e.getAttribute('data-cat') === cat) ? '' : 'none';
@@ -404,7 +408,7 @@ function page(opts) {
   <a class="site-name" href="${rootPrefix}index.html">← ${siteName}</a>
   <span class="site-meta">${esc(compact.label)}</span>
 </header>`
-    : `<header class="site-top">
+    : `<header class="site-top site-top-home">
   <a class="site-name" href="${rootPrefix}index.html">${siteName}</a>
   ${catbar}
 </header>`;
