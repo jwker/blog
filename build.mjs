@@ -3,7 +3,7 @@
  * 极简 md 博客构建脚本（零框架）
  * 扫描 content/ 下的 .md 文件 → 生成静态站到 dist/
  * 标题取文件名（支持 "YYYY-MM-DD-标题.md" 命名，日期从文件名解析）
- * 样式：Riso 孔版印刷（纸面 + 钴蓝 + 荧光粉），写在 build.mjs 里
+ * 样式：单列阅读流（白底 + 墨色 + 发丝线），写在 build.mjs 里
  * 微调：template.json 驱动（站点信息 + 少量开关）
  */
 import fs from 'node:fs';
@@ -26,9 +26,9 @@ const site = config.site || {};
 // 微调参数 → CSS 变量覆盖
 const t = config.tweak || {};
 const fontStacks = {
-  sans: "'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif",
-  serif: "'Songti SC','Noto Serif SC','SimSun',serif",
-  mono: "'SF Mono','JetBrains Mono',Consolas,monospace",
+  sans: "'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif",
+  serif: "'Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',serif",
+  mono: "'SF Mono','JetBrains Mono','Menlo','Consolas',monospace",
 };
 const overrides = [];
 if (t.bg) overrides.push(`--bg:${t.bg}`);
@@ -38,206 +38,113 @@ if (t.font_size) overrides.push(`--font-size:${t.font_size}px`);
 const tweakCss = overrides.length ? `:root{${overrides.join(';')}}` : '';
 const showDate = t.show_date === true;
 
-// ---------- 基础布局 CSS（Riso 孔版） ----------
+// ---------- 基础布局 CSS（单列阅读流） ----------
 const baseCss = `
-:root{--bg:#f2efe4;--text:#151517;--muted:#5d5b53;--ink:var(--text);--paper:var(--bg);--pink:#ff4f7e;--cobalt:#2340c8;--card-bg:#151517;--card-fg:#f2efe4;--font-family:'Songti SC','Noto Serif SC','SimSun',serif;--font-size:17px;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
+:root{--bg:#FFFFFF;--text:#171717;--muted:#8C8C8C;--line:#E8E8E8;--surface:#FAFAFA;--font-family:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--font-size:16.5px;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:var(--font-family,var(--serif));font-size:var(--font-size);line-height:1.9;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
-::selection{background:var(--pink);color:var(--ink);}
+body{background:var(--bg);color:var(--text);font-family:var(--font-family);font-size:var(--font-size);line-height:1.95;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
+::selection{background:var(--text);color:var(--bg);}
 a{color:inherit;text-decoration:none;}
-a:focus-visible,button:focus-visible{outline:3px solid var(--cobalt);outline-offset:3px;}
+a:focus-visible,button:focus-visible,.entry:focus-visible{outline:2px solid var(--text);outline-offset:3px;}
 img{max-width:100%;}
-.skip{position:absolute;left:-9999px;top:0;z-index:200;padding:10px 14px;border:2px solid var(--ink);background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:11px;}
+.skip{position:absolute;left:-9999px;top:0;z-index:200;padding:9px 13px;background:var(--text);color:var(--bg);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
 .skip:focus{left:12px;top:12px;}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-.page{width:min(calc(100% - 64px),1180px);margin:0 auto;padding-bottom:8px;}
 
-/* 报头 */
-.masthead{padding-top:26px;}
-.topline{display:flex;align-items:baseline;justify-content:space-between;gap:24px;padding-bottom:14px;border-bottom:2px solid var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);}
-.topline nav{display:flex;gap:22px;white-space:nowrap;}
-.topline a:hover{color:var(--cobalt);}
-.masthead h1{display:inline-block;max-width:100%;margin:30px 0 0;padding:.02em .09em .07em;background:var(--cobalt);color:#fff;box-shadow:8px 8px 0 var(--pink);font-family:var(--sans);font-size:clamp(46px,10.5vw,128px);font-weight:900;line-height:.98;letter-spacing:-.035em;}
-.masthead h1 a{color:inherit;}
+/* 页面骨架 */
+.site{max-width:680px;margin:0 auto;padding:0 24px 40px;}
+.site-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:22px;margin:0 -24px;padding:19px 24px;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.site-name{font-size:14px;font-weight:500;letter-spacing:.01em;white-space:nowrap;}
+.site-nav{display:flex;gap:18px;min-width:0;overflow-x:auto;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);scrollbar-width:none;}
+.site-nav::-webkit-scrollbar{display:none;}
+.site-nav button{font:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;white-space:nowrap;}
+.site-nav button:hover{color:var(--text);}
+.site-nav button.on{color:var(--text);}
+.site-meta{font-family:var(--mono);font-size:9px;letter-spacing:.11em;color:var(--muted);white-space:nowrap;}
 
-/* 最新一条 */
-.hero{position:relative;margin-top:48px;padding:44px 46px 46px;border:2px solid var(--ink);background:var(--pink);color:#151517;box-shadow:9px 9px 0 var(--ink);overflow:hidden;cursor:pointer;}
-.hero::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(21,21,23,.5) .7px,transparent .9px);background-size:6px 6px;opacity:.14;pointer-events:none;}
-.hero::before{content:"“";position:absolute;top:-34px;right:22px;z-index:0;font-family:Georgia,"Times New Roman",serif;font-size:220px;line-height:1;color:var(--paper);opacity:.55;pointer-events:none;}
-.hero>*{position:relative;z-index:1;}
-.meta{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;}
-.hero-quote{margin:0;max-width:20em;font-family:var(--sans);font-size:clamp(27px,3.4vw,44px);font-weight:800;line-height:1.36;letter-spacing:-.01em;}
-.hero-quote p{margin:0 0 .45em;}
-.hero-quote p:last-child{margin-bottom:0;}
-.hero-quote a{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px;}
-.hero .hero-media{margin-top:26px;}
+/* 首页单列流 */
+.feed{margin-top:6px;}
+.entry{padding:42px 0 44px;border-bottom:1px solid var(--line);cursor:pointer;}
+.entry:first-child{padding-top:38px;}
+.entry-meta{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-bottom:17px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);}
+.entry-meta .cat{color:var(--text);}
+.entry-body{max-width:36em;font-size:1em;line-height:1.95;}
+.entry:first-child .entry-body{font-size:1.06em;}
+.entry-body p{margin:0 0 .9em;}
+.entry-body p:last-child{margin-bottom:0;}
+.entry h2{margin-bottom:10px;font-size:clamp(22px,3vw,27px);font-weight:600;line-height:1.45;letter-spacing:-.02em;}
+.entry .excerpt{max-width:36em;font-size:.91em;line-height:1.85;color:var(--muted);}
+.entry .more{display:inline-block;margin-top:16px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--text);}
+.entry:hover h2{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;}
+.entry .img-grid{margin-top:26px;}
+.empty{padding:80px 0;text-align:center;color:var(--muted);font-size:.91em;}
 
-/* 钴蓝面板 / 图文分栏 */
-.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center;margin-top:64px;cursor:pointer;}
-.split-solo{grid-template-columns:1fr;}
-.cobalt-panel{position:relative;padding:34px 36px 38px;border:2px solid var(--ink);background:var(--cobalt);color:#f2efe4;box-shadow:9px 9px 0 var(--pink);}
-.cobalt-panel .meta{color:rgba(242,239,228,.8);}
-.cobalt-panel .panel-text p{margin:0 0 .8em;font-family:var(--serif);font-size:20px;line-height:1.85;}
-.cobalt-panel .panel-text p:last-child{margin-bottom:0;}
-.cobalt-panel a{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
-.icon-card{margin:0;padding:18px 18px 14px;border:2px solid var(--ink);background:var(--paper);box-shadow:8px 8px 0 var(--ink);transform:rotate(-3deg);}
-.icon-card img{display:block;width:100%;height:auto;background:#fff;border:1.5px solid var(--ink);}
-.icon-card figcaption{margin-top:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);}
-
-/* 大图条目 */
-.wide-entry{margin-top:82px;cursor:pointer;}
-.entry-meta{display:flex;align-items:center;gap:14px;margin-bottom:16px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
-.entry-meta .tag{padding:4px 8px;border:1.5px solid var(--ink);background:var(--pink);font-size:9px;}
-.lede{margin:0 0 26px;max-width:24em;font-family:var(--sans);font-size:clamp(24px,2.6vw,32px);font-weight:800;line-height:1.45;letter-spacing:-.01em;}
-.lede p{margin:0 0 .45em;}
-.lede p:last-child{margin-bottom:0;}
-.diagram-frame{margin:0;padding:10px;border:2px solid var(--ink);background:#fff;box-shadow:10px 10px 0 var(--cobalt);}
-.diagram-frame img{display:block;width:100%;height:auto;}
-.diagram-frame img+img{margin-top:10px;}
-
-/* 短记 */
-.rant{margin-top:78px;padding:4px 0 4px 26px;border-left:6px solid var(--cobalt);max-width:820px;cursor:pointer;}
-.rant .entry-meta{margin-bottom:14px;}
-.rant-text p{margin:0 0 .8em;font-family:var(--serif);font-size:18px;line-height:2;}
-.rant-text p:last-child{margin-bottom:0;}
-
-/* 更早的记录 */
-.earlier{margin-top:84px;}
-.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding-bottom:12px;border-bottom:2px solid var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;}
-.section-head h2{margin:0;font-family:var(--mono);font-size:11px;font-weight:500;}
-.section-head h2::before{content:"";display:inline-block;width:9px;height:9px;margin-right:10px;background:var(--pink);}
-.section-head span{color:var(--muted);}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:48px;}
-.grid-item{padding:17px 0 21px;border-bottom:1.5px solid var(--ink);cursor:pointer;}
-.grid-item time{display:block;margin-bottom:8px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
-.grid-item:hover time{color:var(--cobalt);}
-.grid-text p{margin:0;font-size:17px;line-height:1.8;}
-.grid-media{margin-top:12px;}
-
-/* 文章 */
-.articles{margin-top:78px;display:grid;gap:28px;}
-.article-strip{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--pink);transition:transform .15s ease;}
-.article-strip:hover{transform:translate(-2px,-2px);}
-.article-strip .label{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
-.article-strip h2{margin:0;font-family:var(--sans);font-size:clamp(19px,2.2vw,27px);font-weight:800;line-height:1.4;letter-spacing:-.01em;}
-.article-strip time{font-family:var(--mono);font-size:10px;color:rgba(242,239,228,.62);white-space:nowrap;}
-
-/* 分类筛选条 */
-.catbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:38px;padding-bottom:18px;border-bottom:2px solid var(--ink);}
-.catbar button{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);background:none;border:1.5px solid var(--ink);padding:5px 11px;cursor:pointer;}
-.catbar button span{opacity:.55;}
-.catbar button:hover{color:var(--cobalt);}
-.catbar button.on{background:var(--pink);color:var(--ink);}
-
-/* 首页时间轴：随笔与文章按时间顺序混排 */
-.timeline{margin-top:30px;}
-.entry{margin-bottom:30px;}
-.entry .date{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);}
-.essay{display:block;padding:4px 0 6px 22px;border-left:4px solid var(--pink);}
-.essay .meta{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
-.essay .tag{display:inline-block;padding:1px 7px;border:1.5px solid var(--pink);color:var(--cobalt);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
-.essay:hover .tag{background:var(--pink);color:var(--ink);}
-.essay .body p{margin:0 0 .8em;max-width:44em;font-size:17px;line-height:1.85;}
-.essay .body p:last-child{margin-bottom:0;}
-.essay .body a{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
-.essay .img-grid-single img{max-height:420px;width:auto;max-width:100%;}
-.article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:22px;padding:26px 28px;border:2px solid var(--ink);background:var(--card-bg);color:var(--card-fg);box-shadow:9px 9px 0 var(--cobalt);transition:transform .15s ease;}
-.article:hover{transform:translate(-2px,-2px);}
-.article .lead{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
-.article .lead .date{color:rgba(242,239,228,.55);}
-.article .tag{padding:5px 9px;background:var(--pink);color:var(--ink);font-family:var(--mono);font-size:9px;letter-spacing:.1em;}
-.article .main{display:flex;flex-direction:column;gap:8px;min-width:0;}
-.article .title{font-family:var(--sans);font-size:clamp(20px,2.3vw,28px);font-weight:800;line-height:1.35;letter-spacing:-.01em;}
-.article .excerpt{display:block;font-size:15px;line-height:1.7;color:rgba(242,239,228,.7);}
-.article .more{font-family:var(--mono);font-size:10px;letter-spacing:.08em;white-space:nowrap;color:var(--pink);}
-.article .more::before{content:"▸";margin-right:6px;}
+/* 图片网格 */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.img-grid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;}
+.img-grid-4{grid-template-columns:repeat(2,1fr);}
+.img-grid-single{grid-template-columns:1fr;justify-items:start;}
+.img-grid-single img{width:auto;max-width:100%;height:auto;max-height:480px;object-fit:contain;}
 
 /* 页脚 */
-.foot{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-top:44px;padding:16px 0 36px;border-top:2px solid var(--ink);font-family:var(--mono);font-size:10px;color:var(--muted);}
-.foot a:hover{color:var(--cobalt);}
+.site-foot{display:flex;justify-content:space-between;gap:24px;padding:28px 0 0;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);}
+.site-foot a:hover{color:var(--text);}
 
 /* 详情页 */
-.masthead-compact .topline{border-bottom-width:2px;}
-.post-main{padding-top:54px;}
-.post-full{max-width:900px;border-top:2px solid var(--ink);padding-top:26px;padding-bottom:8px;}
-.post-full .entry-meta{margin-bottom:30px;}
-.post-full .post-title{margin:0 0 26px;font-family:var(--sans);font-size:clamp(28px,4vw,42px);font-weight:900;line-height:1.25;letter-spacing:-.02em;}
-.post-full .post-title + .md-body > h1:first-child{margin-top:0;}
-.md-body{font-size:1em;}
-.md-body h1,.md-body h2,.md-body h3{font-family:var(--sans);line-height:1.4;letter-spacing:-.01em;margin:1.6em 0 .6em;}
-.md-body h1{font-size:1.65em;}
-.md-body h2{font-size:1.35em;}
-.md-body h3{font-size:1.15em;}
+.read{padding:56px 0 8px;}
+.read-meta{margin-bottom:26px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);}
+.post-title{margin:0 0 28px;font-size:clamp(28px,4vw,36px);font-weight:600;line-height:1.35;letter-spacing:-.03em;}
+.md-body{font-size:1em;line-height:1.95;}
+.md-body h1,.md-body h2,.md-body h3{font-family:var(--sans);font-weight:600;line-height:1.4;letter-spacing:-.02em;margin:1.6em 0 .6em;}
+.md-body h1{font-size:1.6em;}
+.md-body h2{font-size:1.32em;}
+.md-body h3{font-size:1.14em;}
 .md-body p{margin:1em 0;}
-.md-body blockquote{margin:1.2em 0;padding:.2em 1em;border-left:6px solid var(--cobalt);color:var(--muted);}
+.md-body blockquote{margin:1.6em 0;padding-left:22px;border-left:1px solid var(--text);color:var(--muted);}
 .md-body blockquote p{margin:.6em 0;}
-.md-body code{background:rgba(21,21,23,.07);padding:.15em .4em;border:1px solid rgba(21,21,23,.16);font-family:var(--mono);font-size:.86em;}
-.md-body pre{background:#fff;border:2px solid var(--ink);padding:14px 16px;box-shadow:6px 6px 0 var(--cobalt);overflow-x:auto;margin:1.2em 0;}
-.md-body pre code{background:none;border:none;padding:0;}
-.md-body img{max-width:100%;height:auto;border:2px solid var(--ink);background:#fff;padding:5px;box-shadow:7px 7px 0 var(--cobalt);}
-.md-body a{color:var(--cobalt);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;}
+.md-body code{padding:.12em .35em;background:var(--surface);border:1px solid var(--line);font-family:var(--mono);font-size:.86em;}
+.md-body pre{margin:1.2em 0;padding:14px 16px;background:var(--surface);border:1px solid var(--line);overflow-x:auto;}
+.md-body pre code{padding:0;background:none;border:0;}
+.md-body img{max-width:100%;height:auto;margin:1.4em 0;}
+.md-body a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;}
 .md-body ul,.md-body ol{margin:1em 0;padding-left:1.6em;}
 .md-body li{margin:.3em 0;}
-.md-body table{border-collapse:collapse;margin:1em 0;}
-.md-body th,.md-body td{border:1.5px solid var(--ink);padding:6px 12px;}
-.md-body th{background:var(--pink);font-family:var(--sans);}
-.md-body hr{border:none;border-top:2px solid var(--ink);margin:2em 0;}
-.back{display:inline-block;margin-top:40px;padding:8px 14px;border:2px solid var(--ink);background:var(--paper);font-family:var(--mono);font-size:10px;letter-spacing:.08em;box-shadow:4px 4px 0 var(--pink);}
-.back:hover{background:var(--pink);color:var(--ink);}
-
-/* 图片九宫格（朋友圈式：一行最多 3 个；正好 4 张时 2×2；单张显示大图）
-   尺寸沿用缩小后的规格：多图网格 50% 宽、单图 30% 宽 */
-.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:1.2em 0;max-width:50%;}
-.img-grid img{width:100%;aspect-ratio:1;object-fit:cover;border:2px solid var(--ink);background:#fff;padding:0;box-shadow:4px 4px 0 var(--cobalt);display:block;}
-.img-grid img:nth-child(2n){box-shadow:4px 4px 0 var(--pink);}
-.img-grid-4{grid-template-columns:repeat(2,1fr);}
-.img-grid-single{grid-template-columns:1fr;max-width:30%;}
-.img-grid-single img{aspect-ratio:auto;height:auto;object-fit:contain;box-shadow:6px 6px 0 var(--pink);}
-.hero .img-grid-single img{max-height:480px;width:auto;max-width:100%;}
-.grid-media{margin:12px 0 0;}
+.md-body table{width:100%;border-collapse:collapse;margin:1.4em 0;font-size:.95em;}
+.md-body th,.md-body td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+.md-body th{font-weight:600;border-bottom-color:var(--text);}
+.md-body hr{border:0;border-top:1px solid var(--line);margin:2.2em 0;}
+.md-body .img-grid{margin:1.6em 0;}
+.md-body .img-grid img{margin:0;aspect-ratio:1;object-fit:cover;}
+.md-body .img-grid-single img{margin:0;width:auto;max-width:100%;height:auto;max-height:480px;object-fit:contain;}
+.back-link{display:block;width:100%;margin-top:48px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);}
+.back-link:hover{color:var(--text);}
 
 /* 图片灯箱 */
-.lb{position:fixed;inset:0;z-index:99;background:rgba(21,21,23,.94);display:none;align-items:center;justify-content:center;}
+.lb{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:rgba(17,17,17,.96);}
 .lb.open{display:flex;}
-.lb img{max-width:92vw;max-height:92vh;border:3px solid var(--paper);background:#fff;box-shadow:10px 10px 0 var(--pink);}
-.lb-btn{position:absolute;color:var(--ink);background:var(--pink);border:2px solid var(--ink);border-radius:0;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer;z-index:2;font-family:var(--mono);}
-.lb-btn:active{background:var(--cobalt);color:var(--paper);}
-.lb-prev{left:12px;top:50%;transform:translateY(-50%);}
-.lb-next{right:12px;top:50%;transform:translateY(-50%);}
-.lb-close{right:12px;top:12px;font-size:18px;}
+.lb img{width:auto;height:auto;max-width:92vw;max-height:92vh;object-fit:contain;}
+.lb-btn{position:absolute;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;font:300 20px/1 var(--mono);cursor:pointer;}
+.lb-btn:hover{background:rgba(255,255,255,.12);}
+.lb-btn:active{background:#fff;color:#111;}
+.lb-prev{left:14px;top:50%;transform:translateY(-50%);}
+.lb-next{right:14px;top:50%;transform:translateY(-50%);}
+.lb-close{right:14px;top:14px;font-size:16px;}
 
-@media (max-width:820px){
-  .page{width:min(calc(100% - 40px),700px);}
-  .split{grid-template-columns:1fr;gap:36px;}
-  .icon-card{width:min(100%,320px);justify-self:center;}
-  .grid{grid-template-columns:1fr;}
-  .article{grid-template-columns:1fr;gap:12px;align-items:start;}
-  .essay{padding-left:16px;}
-  .img-grid{max-width:100%;}
-  .img-grid-single{max-width:60%;}
-}
-@media (max-width:560px){
-  .topline{font-size:9px;}
-  .masthead h1{margin-top:22px;box-shadow:4px 4px 0 var(--pink);}
-  .hero{margin-top:34px;padding:28px 22px 30px;box-shadow:6px 6px 0 var(--ink);}
-  .hero::before{font-size:150px;top:-22px;right:8px;}
-  .hero-quote{font-size:26px;}
-  .split{margin-top:46px;}
-  .cobalt-panel{padding:26px 22px 30px;box-shadow:6px 6px 0 var(--pink);}
-  .cobalt-panel .panel-text p{font-size:18px;}
-  .wide-entry{margin-top:60px;}
-  .rant{margin-top:58px;padding-left:18px;border-left-width:5px;}
-  .rant-text p{font-size:16.5px;line-height:1.95;}
-  .diagram-frame{box-shadow:6px 6px 0 var(--cobalt);}
-  .earlier{margin-top:60px;}
-  .article-strip{grid-template-columns:1fr;gap:12px;padding:22px;box-shadow:6px 6px 0 var(--pink);}
-  .article-strip .label{justify-self:start;}
-  .article-strip time{white-space:normal;}
-  .foot{flex-direction:column;gap:8px;}
-  .img-grid{max-width:100%;gap:8px;}
-  .img-grid-single{max-width:60%;}
-  .hero .img-grid-single img{max-height:360px;}
+@media (max-width:600px){
+  .site{padding:0 20px 32px;}
+  .site-top{margin:0 -20px;padding:16px 20px;gap:14px;}
+  .site-name{font-size:13px;}
+  .site-nav{gap:12px;font-size:8px;letter-spacing:.06em;}
+  .site-meta{font-size:8px;}
+  .entry{padding:34px 0 36px;}
+  .entry:first-child{padding-top:30px;}
+  .entry-meta{font-size:8px;gap:16px;}
+  .entry:first-child .entry-body{font-size:1em;}
+  .entry h2{font-size:21px;}
+  .img-grid-single img{max-height:360px;}
+  .read{padding:44px 0 8px;}
+  .post-title{font-size:26px;}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto;}
@@ -247,6 +154,10 @@ img{max-width:100%;}
 
 // ---------- Markdown 渲染 ----------
 const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // 列表显示用标题：去掉"随笔"字样（随笔是常态，标题不再重复出现"随笔"）
 function displayTitle(title) {
@@ -269,7 +180,7 @@ function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// 把渲染后的正文拆成「图片」和「文字」两部分，用于列表页的杂志式排版
+// 把渲染后的正文拆成「图片」和「文字」两部分，用于列表页的排版
 function splitRendered(rendered) {
   const images = [];
   const textHtml = rendered
@@ -293,78 +204,69 @@ function clickAttrs(href) {
   return `onclick="if(!event.target.closest('a'))location.href='${js}'" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('a')){event.preventDefault();location.href='${js}'}" role="link" tabindex="0"`;
 }
 
-function essayMeta(p) {
-  return `<p class="meta">${showDate ? dateDot(p.date) + ' / ' : ''}随笔</p>`;
+// 条目右侧的日期；show_date 为 false 时不显示
+function entryTime(p) {
+  if (!showDate) return '';
+  const d = p.date.slice(0, 10);
+  return `<time datetime="${d}">${dateDot(p.date)}</time>`;
 }
 
-function entryMeta(p) {
-  const time = showDate ? `<time datetime="${p.date.slice(0, 10)}">${dateDot(p.date)}</time>` : '';
-  return `<div class="entry-meta">${time}<span class="tag">随笔</span></div>`;
-}
-
-function renderHero(e) {
-  const body = e.textHtml || '<p>（这篇还没有正文）</p>';
-  return `<article class="hero" id="essays" aria-label="最新随笔" ${clickAttrs(e.href)}>
-  ${essayMeta(e)}
-  <div class="hero-quote">${body}</div>
-  ${mediaGrid(e.images, 'hero-media')}
-</article>`;
-}
-
-function renderSplit(e) {
-  const panel = `<div class="cobalt-panel">
-    ${essayMeta(e)}
-    <div class="panel-text">${e.textHtml || '<p>（这篇还没有正文）</p>'}</div>
-  </div>`;
-  if (!e.images.length) {
-    return `<article class="split split-solo" ${clickAttrs(e.href)}>
-  ${panel}
-</article>`;
+// 文章摘要：取正文第一段（跳过标题、图片、代码块），过长截断
+function excerptFromRaw(raw, max = 78) {
+  for (const block of raw.split(/\n\s*\n/)) {
+    const t = block.trim();
+    if (!t || t.startsWith('#') || t.startsWith('![') || t.startsWith('```')) continue;
+    const clean = t
+      .replace(/^[-*+>\s]+/, '')
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[*_`>#]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (clean.length > 4) return clean.length > max ? clean.slice(0, max) + '…' : clean;
   }
-  return `<article class="split" ${clickAttrs(e.href)}>
-  ${panel}
-  <figure class="icon-card">${e.images[0]}<figcaption>附图 / ${dateDot(e.date).slice(5)}</figcaption></figure>
+  return '';
+}
+
+// 分类筛选条：全部 + 各分类（只显示有内容的分类）
+function renderCatBar(categories) {
+  const buttons = categories
+    .map((c, i) => {
+      const cat = c.name === '全部' ? '*' : c.name;
+      return `<button type="button" data-cat="${esc(cat)}"${i === 0 ? ' class="on"' : ''}>${esc(c.name)}</button>`;
+    })
+    .join('\n      ');
+  return `<nav class="site-nav" id="catbar" aria-label="分类筛选">
+      ${buttons}
+    </nav>`;
+}
+
+// 随笔：无标题，正文直接铺开
+function renderEssayEntry(e) {
+  return `<article class="entry" data-type="essay" data-cat="${esc(e.category)}" ${clickAttrs(e.href)}>
+  <div class="entry-meta"><span class="cat">随笔</span>${entryTime(e)}</div>
+  <div class="entry-body">${e.textHtml || '<p>（这篇还没有正文）</p>'}</div>
+  ${mediaGrid(e.images)}
 </article>`;
 }
 
-function renderWide(e) {
-  return `<article class="wide-entry" ${clickAttrs(e.href)}>
-  ${entryMeta(e)}
-  <div class="lede">${e.textHtml || '<p>（这篇还没有正文）</p>'}</div>
-  ${e.images.length ? `<figure class="diagram-frame">${e.images.join('')}</figure>` : ''}
+// 文章：分类 + 日期、标题、摘要、阅读全文
+function renderArticleEntry(a) {
+  return `<article class="entry" data-type="article" data-cat="${esc(a.category)}" ${clickAttrs(`posts/${encodeURI(a.slug)}.html`)}>
+  <div class="entry-meta"><span class="cat">${esc(a.category)} · 文章</span>${entryTime(a)}</div>
+  <h2>《${esc(displayTitle(a.title))}》</h2>
+  ${a.excerpt ? `<p class="excerpt">${esc(a.excerpt)}</p>` : ''}
+  <span class="more">阅读全文 →</span>
 </article>`;
 }
 
-function renderRant(e) {
-  return `<article class="rant" ${clickAttrs(e.href)}>
-  ${entryMeta(e)}
-  <div class="rant-text">${e.textHtml || '<p>（这篇还没有正文）</p>'}</div>
-</article>`;
-}
-
-function renderGrid(items) {
-  if (!items.length) return '';
-  return `<section class="earlier" aria-labelledby="earlier-title">
-  <div class="section-head"><h2 id="earlier-title">更早</h2><span>${String(items.length).padStart(2, '0')}</span></div>
-  <div class="grid">
-    ${items.map(e => `<article class="grid-item" ${clickAttrs(e.href)}>
-      ${showDate ? `<time datetime="${e.date.slice(0, 10)}">${dateDot(e.date)}</time>` : ''}
-      ${e.textHtml ? `<div class="grid-text">${e.textHtml}</div>` : ''}
-      ${mediaGrid(e.images, 'grid-media')}
-    </article>`).join('\n    ')}
-  </div>
-</section>`;
-}
-
-function renderArticles(items) {
-  if (!items.length) return '';
-  return `<section class="articles" id="articles" aria-label="文章">
-    ${items.map(a => `<a class="article-strip" href="posts/${encodeURI(a.slug)}.html">
-      <span class="label">文章</span>
-      <h2>《${displayTitle(a.title)}》</h2>
-      ${showDate ? `<time datetime="${a.date.slice(0, 10)}">${dateDot(a.date)}</time>` : ''}
-    </a>`).join('\n    ')}
-  </section>`;
+// 列表页：随笔与文章按时间倒序混排成一条流
+function renderTimeline(list, essayByFile) {
+  const entries = list.map((p) => {
+    if (p.isEssay) return renderEssayEntry(essayByFile.get(p.file));
+    const raw = fs.readFileSync(p.file, 'utf8');
+    return renderArticleEntry({ ...p, excerpt: excerptFromRaw(raw) });
+  });
+  return `<div class="feed">\n${entries.join('\n')}\n</div>`;
 }
 
 // ---------- 扫描并解析文章 ----------
@@ -404,81 +306,6 @@ function parseFile(f) {
   return { date: fs.statSync(f).mtime.toISOString(), title: base, slug: base, category, file: f };
 }
 
-// 首页布局：timeline（默认，按时间顺序混排随笔与文章）/ classic（旧版分块排版）
-const homeLayout = t.home_layout === 'classic' ? 'classic' : 'timeline';
-
-// ---------- 首页：时间轴 ----------
-// 条目右侧的时间戳；show_date 为 false 时不显示
-function entryTime(p) {
-  if (!showDate) return '';
-  const d = p.date.slice(0, 10);
-  const hm = p.date.slice(11, 16);
-  return `<time class="date" datetime="${d}T${hm}">${dateDot(p.date)} ${hm}</time>`;
-}
-
-// 文章摘要：取正文第一段（跳过标题、图片、代码块），过长截断
-function excerptFromRaw(raw, max = 78) {
-  for (const block of raw.split(/\n\s*\n/)) {
-    const t = block.trim();
-    if (!t || t.startsWith('#') || t.startsWith('![') || t.startsWith('```')) continue;
-    const clean = t
-      .replace(/^[-*+>\s]+/, '')
-      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
-      .replace(/[*_`>#]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    if (clean.length > 4) return clean.length > max ? clean.slice(0, max) + '…' : clean;
-  }
-  return '';
-}
-
-// 随笔：无标题，正文直接铺在页面里
-function renderEssayEntry(e) {
-  const body = e.textHtml || '<p>（这篇还没有正文）</p>';
-  return `<article class="entry" data-type="essay" data-cat="${e.category}">
-  <a class="essay" href="${e.href}">
-    <span class="meta"><span class="tag">随笔</span>${entryTime(e)}</span>
-    <div class="body">${body}</div>
-    ${mediaGrid(e.images)}
-  </a>
-</article>`;
-}
-
-// 文章：黑卡，标题 + 摘要 + 阅读全文
-function renderArticleEntry(a) {
-  return `<article class="entry" data-type="article" data-cat="${a.category}">
-  <a class="article" href="posts/${encodeURI(a.slug)}.html">
-    <span class="lead"><span class="tag">${a.category}</span>${entryTime(a)}</span>
-    <span class="main">
-      <span class="title">《${displayTitle(a.title)}》</span>
-      ${a.excerpt ? `<span class="excerpt">${a.excerpt}</span>` : ''}
-    </span>
-    <span class="more">阅读全文</span>
-  </a>
-</article>`;
-}
-
-// 分类筛选条：全部 + 每个分类，点击在前端过滤条目
-function renderCatBar(categories) {
-  if (categories.length <= 1) return '';
-  const buttons = categories
-    .map((c) => `<button type="button" data-cat="${c.name === '全部' ? '*' : c.name}"${c.name === '全部' ? ' class="on"' : ''}>${c.name} <span>${c.count}</span></button>`)
-    .join('\n      ');
-  return `<nav class="catbar" id="catbar" aria-label="分类筛选">
-      ${buttons}
-    </nav>`;
-}
-
-// 列表页：随笔与文章按时间倒序混排成一条流
-function renderTimeline(list, essayByFile) {
-  const entries = list.map((p) => {
-    if (p.isEssay) return renderEssayEntry(essayByFile.get(p.file));
-    const raw = fs.readFileSync(p.file, 'utf8');
-    return renderArticleEntry({ ...p, excerpt: excerptFromRaw(raw) });
-  });
-  return `<div class="timeline">\n${entries.join('\n')}\n</div>`;
-}
-
 // 改名记录：旧路径 → 新路径（取最近一次改名）
 // 用于给改过名的文章生成旧地址跳转页
 function renameMap() {
@@ -502,7 +329,8 @@ function slugOfPath(p) {
 
 // ---------- 页面骨架 ----------
 // rootPrefix：相对站点根的前缀（列表页 ''，文章页 '../'）
-// needsLightbox：随笔页面（列表页/随笔详情页）带图片灯箱，文章页不带
+// needsLightbox：带图片灯箱（列表页 / 随笔详情页）
+// catbar：列表页顶部的分类筛选（放进吸顶栏）
 function page(opts) {
   const {
     title,
@@ -510,22 +338,30 @@ function page(opts) {
     rootPrefix = '',
     needsLightbox = false,
     compact = null,
-    home = null,
+    catbar = '',
+    footRight = '',
   } = opts;
 
   const year = new Date().getFullYear();
+  const siteName = esc(site.name || '我的博客');
   const lightbox = needsLightbox ? `<div class="lb" id="lb">
   <img id="lbImg" src="" alt="">
-  <button class="lb-btn lb-prev" onclick="lbNav(-1)">‹</button>
-  <button class="lb-btn lb-next" onclick="lbNav(1)">›</button>
-  <button class="lb-btn lb-close" onclick="lbClose()">×</button>
+  <button class="lb-btn lb-prev" type="button" onclick="lbNav(-1)" aria-label="上一张">‹</button>
+  <button class="lb-btn lb-next" type="button" onclick="lbNav(1)" aria-label="下一张">›</button>
+  <button class="lb-btn lb-close" type="button" onclick="lbClose()" aria-label="关闭">×</button>
 </div>
 <script>
 (function(){
-  var imgs = Array.prototype.slice.call(document.querySelectorAll('.img-grid img, .icon-card img, .diagram-frame img'));
+  var imgs = Array.prototype.slice.call(document.querySelectorAll('.entry .img-grid img, .md-body img'));
   if (!imgs.length) return;
   var lb = document.getElementById('lb'), cur = 0;
-  function show(i){ cur = (i + imgs.length) % imgs.length; document.getElementById('lbImg').src = imgs[cur].getAttribute('src'); lb.classList.add('open'); }
+  function show(i){
+    cur = (i + imgs.length) % imgs.length;
+    var img = document.getElementById('lbImg');
+    img.src = imgs[cur].getAttribute('src');
+    img.alt = imgs[cur].getAttribute('alt') || '';
+    lb.classList.add('open');
+  }
   window.lbClose = function(){ lb.classList.remove('open'); };
   window.lbNav = function(d){ show(cur + d); };
   imgs.forEach(function(img, i){
@@ -543,7 +379,7 @@ function page(opts) {
 <\/script>` : '';
 
   // 分类筛选：点分类按钮过滤首页条目（纯前端，不生成额外页面）
-  const catFilter = home && home.hasCatBar ? `<script>
+  const catFilter = catbar ? `<script>
 (function(){
   var bar = document.getElementById('catbar');
   if (!bar) return;
@@ -562,25 +398,15 @@ function page(opts) {
 })();
 <\/script>` : '';
 
-  // 顶部导航：旧版分块排版才需要「随笔 / 文章」两个锚点
-  const navHtml = home && home.layout === 'classic'
-    ? `${home.essayCount ? '<a href="#essays">随笔</a>' : ''}${home.articleCount ? '<a href="#articles">文章</a>' : ''}`
-    : '';
-
   const header = compact
-    ? `<header class="masthead masthead-compact">
-  <h1 class="sr-only">${compact.heading}</h1>
-  <div class="topline">
-    <a href="${rootPrefix}index.html">← ${site.name || '我的博客'}</a>
-    <span>${compact.label}</span>
-  </div>
+    ? `<header class="site-top site-top-compact">
+  <h1 class="sr-only">${esc(compact.heading)}</h1>
+  <a class="site-name" href="${rootPrefix}index.html">← ${siteName}</a>
+  <span class="site-meta">${esc(compact.label)}</span>
 </header>`
-    : `<header class="masthead">
-  <div class="topline">
-    <span>个人博客 / ${year}</span>
-    ${navHtml ? `<nav aria-label="主导航">${navHtml}</nav>` : ''}
-  </div>
-  <h1><a href="${rootPrefix}index.html">${site.name || '我的博客'}</a></h1>
+    : `<header class="site-top">
+  <a class="site-name" href="${rootPrefix}index.html">${siteName}</a>
+  ${catbar}
 </header>`;
 
   return `<!DOCTYPE html>
@@ -596,14 +422,14 @@ ${tweakCss}
 </head>
 <body id="top">
 <a class="skip" href="#main">跳到正文</a>
-<div class="page">
+<div class="site">
 ${header}
   <main id="main">
 ${body}
   </main>
-  <footer class="foot">
-    <span>© ${year} ${site.name || ''}</span>
-    <a href="#top">回到顶部</a>
+  <footer class="site-foot">
+    <span>© ${year} ${siteName}</span>
+    <span>${footRight || '<a href="#top">回到顶部</a>'}</span>
   </footer>
 </div>
 ${lightbox}
@@ -685,7 +511,7 @@ const imgCount = await buildImages(imagesDir, path.join(distDir, 'images'));
 
 const files = walk(contentDir).sort();
 const posts = files.map(parseFile).sort((a, b) => (a.date === b.date ? 0 : (a.date < b.date ? 1 : -1)));
-// 分类：所在目录就是分类，「随笔」是保留分类（首页展开全文，其余分类走黑卡）
+// 分类：所在目录就是分类，「随笔」是保留分类（首页展开全文，其余分类走文章条目）
 for (const p of posts) p.isEssay = p.category === '随笔';
 // slug 重名时（如不同分类下同名文件）用分类名做前缀
 const usedSlugs = new Map();
@@ -703,74 +529,27 @@ const essays = posts.filter(p => p.isEssay).map((p) => {
     ...splitRendered(rendered),
   };
 });
-const articles = posts.filter(p => !p.isEssay);
-
-// 列表页：默认按时间顺序混排（timeline）；classic 走旧的杂志式分块排版
-const listBlocks = [];
-const gridItems = [];
-
-if (homeLayout === 'classic') {
-  essays.forEach((e, i) => {
-    if (i === 0) {
-      listBlocks.push(renderHero(e));
-      return;
-    }
-    if (i === 1) {
-      listBlocks.push(e.images.length === 1 || e.images.length === 0 ? renderSplit(e) : renderWide(e));
-      return;
-    }
-    if (i === 2) {
-      listBlocks.push(e.images.length ? (e.images.length === 1 ? renderSplit(e) : renderWide(e)) : renderRant(e));
-      return;
-    }
-    if (i === 3 && e.images.length) {
-      listBlocks.push(renderWide(e));
-      return;
-    }
-    if (i === 3 && !e.images.length) {
-      listBlocks.push(renderRant(e));
-      return;
-    }
-    if (i === 4 && e.images.length) {
-      listBlocks.push(renderWide(e));
-      return;
-    }
-    if (i === 5 && e.images.length) {
-      listBlocks.push(renderWide(e));
-      return;
-    }
-    gridItems.push(e);
-  });
-}
 
 const essayByFile = new Map(essays.map((e) => [e.file, e]));
 
-// 分类统计：全部 + 未分类（固定显示）+ 其它分类（按条目数从多到少）
+// 分类统计：全部 + 各分类（按条目数从多到少，只保留有内容的分类）
 const catCounts = new Map();
 for (const p of posts) catCounts.set(p.category, (catCounts.get(p.category) || 0) + 1);
 const categories = [
   { name: '全部', count: posts.length },
-  { name: '未分类', count: catCounts.get('未分类') || 0 },
   ...[...catCounts.entries()]
-    .filter(([name]) => name !== '未分类')
+    .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'))
     .map(([name, count]) => ({ name, count })),
 ];
 
-const indexBody = homeLayout === 'classic'
-  ? [...listBlocks, renderGrid(gridItems), renderArticles(articles)].filter(Boolean).join('\n')
-  : [renderCatBar(categories), renderTimeline(posts, essayByFile)].filter(Boolean).join('\n');
-
+const indexBody = renderTimeline(posts, essayByFile);
 const indexHtml = page({
-  title: `${site.name || '我的博客'}${site.subtitle ? ' · ' + site.subtitle : ''}`,
-  body: indexBody || '<p style="color:var(--muted)">还没有文章。在 content/ 目录新建 .md 文件即可。</p>',
+  title: `${esc(site.name || '我的博客')}${site.subtitle ? ' · ' + esc(site.subtitle) : ''}`,
+  body: indexBody || '<p class="empty">还没有文章。在 content/ 目录新建 .md 文件即可。</p>',
   needsLightbox: true,
-  home: {
-    layout: homeLayout,
-    hasCatBar: homeLayout === 'timeline' && categories.length > 1,
-    essayCount: essays.length,
-    articleCount: articles.length,
-  },
+  catbar: categories.length > 1 ? renderCatBar(categories) : '',
+  footRight: `共 ${posts.length} 篇`,
 });
 fs.writeFileSync(path.join(distDir, 'index.html'), indexHtml);
 
@@ -789,16 +568,16 @@ for (const p of posts) {
   let titleHtml = '';
   if (!p.isEssay) {
     bodyHtml = bodyHtml.replace(new RegExp(`^<h1>${escapeRegExp(pageHeading)}</h1>\\s*`), '');
-    titleHtml = `<h1 class="post-title">《${pageHeading}》</h1>`;
+    titleHtml = `<h1 class="post-title">《${esc(pageHeading)}》</h1>`;
   }
-  const postHtml = `<article class="post-full">
-  <div class="entry-meta">${showDate ? `<time datetime="${p.date.slice(0, 10)}">${dateDot(p.date)}</time>` : ''}<span class="tag">${catLabel}</span></div>
+  const postHtml = `<article class="read">
+  <div class="read-meta">${showDate ? `${esc(catLabel)} / ${dateDot(p.date)}` : esc(catLabel)}</div>
   ${titleHtml}
   <div class="md-body">${bodyHtml}</div>
-  <a class="back" href="../index.html">← 返回列表</a>
+  <a class="back-link" href="../index.html">← 返回列表</a>
 </article>`;
   fs.writeFileSync(path.join(distDir, 'posts', p.slug + '.html'), page({
-    title: `${pageHeading} · ${site.name || '我的博客'}`,
+    title: `${esc(pageHeading)} · ${esc(site.name || '我的博客')}`,
     body: postHtml,
     rootPrefix: '../',
     needsLightbox: p.isEssay,
