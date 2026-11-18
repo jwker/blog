@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>随笔 · 2026.10.11 · 小姜同学的日常</title>
+<style>
+
+:root{--bg:#FFFFFF;--text:#171717;--muted:#8C8C8C;--line:#E8E8E8;--surface:#FAFAFA;--font-family:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--font-size:16.5px;--sans:'PingFang SC','Hiragino Sans GB','Noto Sans SC','Microsoft YaHei',sans-serif;--serif:'Songti SC','Noto Serif SC','Source Han Serif SC','SimSun',serif;--mono:'SF Mono','JetBrains Mono','Menlo','Consolas',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-family);font-size:var(--font-size);line-height:1.95;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
+::selection{background:var(--text);color:var(--bg);}
+a{color:inherit;text-decoration:none;}
+a:focus-visible,button:focus-visible,.entry:focus-visible{outline:2px solid var(--text);outline-offset:3px;}
+img{max-width:100%;}
+.skip{position:absolute;left:-9999px;top:0;z-index:200;padding:9px 13px;background:var(--text);color:var(--bg);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
+.skip:focus{left:12px;top:12px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* 页面骨架 */
+.site{max-width:680px;margin:0 auto;padding:0 24px 40px;}
+.site-top{position:sticky;top:0;z-index:20;margin:0 -24px;padding:16px 24px 13px;background:var(--bg);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+.site-top-home{display:flex;flex-direction:column;align-items:flex-start;gap:7px;}
+.site-top-compact{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:19px 24px;}
+.site-name{font-size:14px;font-weight:500;line-height:1.4;letter-spacing:.01em;white-space:nowrap;}
+.site-nav{display:flex;flex-wrap:wrap;width:100%;gap:6px 18px;font-family:var(--sans);font-size:12px;line-height:1.4;letter-spacing:.02em;color:var(--text);}
+.site-nav button{font:inherit;letter-spacing:inherit;color:inherit;opacity:.6;background:none;border:0;padding:0;cursor:pointer;white-space:nowrap;transition:opacity .15s ease;}
+.site-nav button:hover,.site-nav button.on{opacity:1;}
+.site-meta{font-family:var(--mono);font-size:9px;letter-spacing:.11em;color:var(--muted);white-space:nowrap;}
+
+/* 首页单列流 */
+.feed{margin-top:6px;}
+.entry{padding:42px 0 44px;border-bottom:1px solid var(--line);cursor:pointer;}
+.entry:first-child{padding-top:38px;}
+.entry-meta{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin-bottom:17px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);}
+.entry-meta .cat{color:var(--text);}
+.entry-body{max-width:36em;font-size:1em;line-height:1.95;}
+.entry:first-child .entry-body{font-size:1.06em;}
+.entry-body p{margin:0 0 .9em;}
+.entry-body p:last-child{margin-bottom:0;}
+.entry h2{margin-bottom:10px;font-size:clamp(22px,3vw,27px);font-weight:600;line-height:1.45;letter-spacing:-.02em;}
+.entry .excerpt{max-width:36em;font-size:.91em;line-height:1.85;color:var(--muted);}
+.entry .more{display:inline-block;margin-top:16px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--text);}
+.entry:hover h2{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;}
+.entry .img-grid{margin-top:26px;}
+.empty{padding:80px 0;text-align:center;color:var(--muted);font-size:.91em;}
+
+/* 图片网格 */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.img-grid img{display:block;width:100%;aspect-ratio:1;object-fit:cover;}
+.img-grid-4{grid-template-columns:repeat(2,1fr);}
+.img-grid-single{grid-template-columns:1fr;justify-items:start;}
+.img-grid-single img{width:auto;max-width:100%;height:auto;max-height:480px;object-fit:contain;}
+
+/* 页脚 */
+.site-foot{display:flex;justify-content:space-between;gap:24px;padding:28px 0 0;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--muted);}
+.site-foot a:hover{color:var(--text);}
+
+/* 详情页 */
+.read{padding:56px 0 8px;}
+.read-meta{margin-bottom:26px;font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--muted);}
+.post-title{margin:0 0 28px;font-size:clamp(28px,4vw,36px);font-weight:600;line-height:1.35;letter-spacing:-.03em;}
+.md-body{font-size:1em;line-height:1.95;}
+.md-body h1,.md-body h2,.md-body h3{font-family:var(--sans);font-weight:600;line-height:1.4;letter-spacing:-.02em;margin:1.6em 0 .6em;}
+.md-body h1{font-size:1.6em;}
+.md-body h2{font-size:1.32em;}
+.md-body h3{font-size:1.14em;}
+.md-body p{margin:1em 0;}
+.md-body blockquote{margin:1.6em 0;padding-left:22px;border-left:1px solid var(--text);color:var(--muted);}
+.md-body blockquote p{margin:.6em 0;}
+.md-body code{padding:.12em .35em;background:var(--surface);border:1px solid var(--line);font-family:var(--mono);font-size:.86em;}
+.md-body pre{margin:1.2em 0;padding:14px 16px;background:var(--surface);border:1px solid var(--line);overflow-x:auto;}
+.md-body pre code{padding:0;background:none;border:0;}
+.md-body img{max-width:100%;height:auto;margin:1.4em 0;}
+.md-body a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;}
+.md-body ul,.md-body ol{margin:1em 0;padding-left:1.6em;}
+.md-body li{margin:.3em 0;}
+.md-body table{width:100%;border-collapse:collapse;margin:1.4em 0;font-size:.95em;}
+.md-body th,.md-body td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+.md-body th{font-weight:600;border-bottom-color:var(--text);}
+.md-body hr{border:0;border-top:1px solid var(--line);margin:2.2em 0;}
+.md-body .img-grid{margin:1.6em 0;}
+.md-body .img-grid img{margin:0;aspect-ratio:1;object-fit:cover;}
+.md-body .img-grid-single img{margin:0;width:auto;max-width:100%;height:auto;max-height:480px;object-fit:contain;}
+.back-link{display:block;width:100%;margin-top:48px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);}
+.back-link:hover{color:var(--text);}
+
+/* 图片灯箱 */
+.lb{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:rgba(17,17,17,.96);}
+.lb.open{display:flex;}
+.lb img{width:auto;height:auto;max-width:92vw;max-height:92vh;object-fit:contain;}
+.lb-btn{position:absolute;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;font:300 20px/1 var(--mono);cursor:pointer;}
+.lb-btn:hover{background:rgba(255,255,255,.12);}
+.lb-btn:active{background:#fff;color:#111;}
+.lb-prev{left:14px;top:50%;transform:translateY(-50%);}
+.lb-next{right:14px;top:50%;transform:translateY(-50%);}
+.lb-close{right:14px;top:14px;font-size:16px;}
+
+@media (max-width:600px){
+  .site{padding:0 20px 32px;}
+  .site-top{margin:0 -20px;padding:14px 20px 12px;}
+  .site-top-compact{padding:16px 20px;}
+  .site-name{font-size:13px;}
+  .site-nav{width:100%;gap:5px 16px;font-size:12px;letter-spacing:.01em;}
+  .site-meta{font-size:8px;}
+  .entry{padding:34px 0 36px;}
+  .entry:first-child{padding-top:30px;}
+  .entry-meta{font-size:8px;gap:16px;}
+  .entry:first-child .entry-body{font-size:1em;}
+  .entry h2{font-size:21px;}
+  .img-grid-single img{max-height:360px;}
+  .read{padding:44px 0 8px;}
+  .post-title{font-size:26px;}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+}
+
+
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">跳到正文</a>
+<div class="site">
+<header class="site-top site-top-compact">
+  <h1 class="sr-only">随笔 · 2026.10.11</h1>
+  <a class="site-name" href="../index.html">← 小姜同学的日常</a>
+  <span class="site-meta">随笔 / 2026.10.11</span>
+</header>
+  <main id="main">
+<article class="read">
+  <div class="read-meta">随笔 / 2026.10.11</div>
+  
+  <div class="md-body"><p>把这个图交给ai，让他按照这个画个图标出来，怎么都画不对，后来我说小写英文字母h上下翻转过来，一次成功！😎</p>
+<div class="img-grid img-grid-single"><img src="../images/1507.png" alt=""></div></div>
+  <a class="back-link" href="../index.html">← 返回列表</a>
+</article>
+  </main>
+  <footer class="site-foot">
+    <span>© 2026 小姜同学的日常</span>
+    <span><a href="#top">回到顶部</a></span>
+  </footer>
+</div>
+<div class="lb" id="lb">
+  <img id="lbImg" src="" alt="">
+  <button class="lb-btn lb-prev" type="button" onclick="lbNav(-1)" aria-label="上一张">‹</button>
+  <button class="lb-btn lb-next" type="button" onclick="lbNav(1)" aria-label="下一张">›</button>
+  <button class="lb-btn lb-close" type="button" onclick="lbClose()" aria-label="关闭">×</button>
+</div>
+<script>
+(function(){
+  var imgs = Array.prototype.slice.call(document.querySelectorAll('.entry .img-grid img, .md-body img'));
+  if (!imgs.length) return;
+  var lb = document.getElementById('lb'), cur = 0;
+  function show(i){
+    cur = (i + imgs.length) % imgs.length;
+    var img = document.getElementById('lbImg');
+    img.src = imgs[cur].getAttribute('src');
+    img.alt = imgs[cur].getAttribute('alt') || '';
+    lb.classList.add('open');
+  }
+  window.lbClose = function(){ lb.classList.remove('open'); };
+  window.lbNav = function(d){ show(cur + d); };
+  imgs.forEach(function(img, i){
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); show(i); });
+  });
+  lb.addEventListener('click', function(ev){ if (ev.target === lb) lbClose(); });
+  document.addEventListener('keydown', function(e){
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') lbClose();
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
+  });
+})();
+</script>
+
+</body>
+</html>
