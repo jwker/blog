@@ -153,6 +153,121 @@ img{max-width:100%;}
 }
 `;
 
+// ---------- 手机端满屏信息流样式（只在 ≤700px 启用，桌面端不参与） ----------
+const mobileFeedCss = `
+/* 手机端满屏信息流 */
+.m-feed{display:none;}
+.m-skip{position:absolute;left:-9999px;top:0;z-index:120;padding:9px 13px;background:var(--text);color:var(--bg);font-family:var(--mono);font-size:10px;letter-spacing:.08em;}
+.m-skip:focus{left:12px;top:calc(12px + env(safe-area-inset-top));}
+.m-deck{height:100%;overflow-y:auto;overflow-x:hidden;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.m-deck::-webkit-scrollbar{display:none;}
+.m-slide{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;background:var(--bg);}
+.m-slide::after{content:"";position:absolute;left:30px;right:30px;bottom:0;height:1px;background:var(--line);}
+.m-slide:last-child::after{display:none;}
+.m-meta{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:calc(22px + env(safe-area-inset-top)) 30px 0;}
+.m-cat{font-size:11px;line-height:1.4;letter-spacing:.08em;color:var(--text);}
+.m-date{font-family:var(--mono);font-size:9px;letter-spacing:.09em;color:var(--muted);white-space:nowrap;}
+.m-main{flex:1 1 auto;min-height:0;display:flex;padding:14px 30px 0;}
+.m-essay-box{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden;}
+.m-essay-inner{width:100%;}
+.m-essay-text{font-size:24px;line-height:1.95;letter-spacing:.005em;overflow-wrap:anywhere;word-break:break-word;}
+.m-essay-text p{margin:0 0 .9em;}
+.m-essay-text p:last-child{margin-bottom:0;}
+.m-essay-text a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;}
+.m-essay-text h1,.m-essay-text h2,.m-essay-text h3{font-weight:600;line-height:1.4;letter-spacing:-.015em;margin:1.1em 0 .5em;}
+.m-essay-text h1{font-size:1.45em;}
+.m-essay-text h2{font-size:1.25em;}
+.m-essay-text h3{font-size:1.1em;}
+.m-essay-text blockquote{margin:1em 0;padding-left:16px;border-left:1px solid var(--text);color:var(--muted);}
+.m-essay-text code{padding:.1em .3em;background:var(--surface);border:1px solid var(--line);font-family:var(--mono);font-size:.84em;}
+.m-essay-text pre{margin:1em 0;padding:12px;background:var(--surface);border:1px solid var(--line);overflow-x:auto;font-family:var(--mono);font-size:.8em;line-height:1.7;}
+.m-essay-text pre code{padding:0;background:none;border:0;font-size:1em;}
+.m-essay-text ul,.m-essay-text ol{margin:.8em 0;padding-left:1.4em;}
+.m-essay-text li{margin:.25em 0;}
+.m-essay-text table{width:100%;border-collapse:collapse;margin:1em 0;font-size:.8em;}
+.m-essay-text th,.m-essay-text td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+.m-essay-text hr{border:0;border-top:1px solid var(--line);margin:1.6em 0;}
+.m-short .m-essay-text{text-align:center;}
+.m-essay-inner .m-thumbs{margin-top:20px;}
+.m-thumbs{display:flex;align-items:center;gap:5px;}
+.m-thumb{display:block;width:46px;height:46px;flex:0 0 46px;padding:0;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--surface);cursor:zoom-in;}
+.m-thumb img{display:block;width:100%;height:100%;object-fit:cover;}
+.m-thumb-more{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;letter-spacing:.05em;color:var(--muted);}
+.m-foot{position:relative;flex:0 0 auto;min-height:78px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:0 88px calc(26px + env(safe-area-inset-bottom)) 30px;}
+.m-full{font-size:11px;line-height:1.4;color:var(--muted);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--line);}
+.m-full:hover{color:var(--text);}
+.m-full[hidden]{display:none;}
+.m-clipped .m-essay-box{justify-content:flex-start;-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 44px),transparent);}
+.m-article-main{flex-direction:column;justify-content:center;padding-bottom:22px;}
+.m-title{font-family:var(--serif);font-size:34px;line-height:1.32;font-weight:600;letter-spacing:-.02em;text-wrap:balance;}
+.m-title a{color:inherit;}
+.m-title a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;}
+.m-excerpt{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;margin-top:22px;font-size:15px;line-height:1.9;color:var(--muted);}
+.m-read{position:relative;display:inline-block;padding:0 0 6px;font-size:12px;line-height:1.4;letter-spacing:.02em;color:var(--text);}
+.m-read::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--text);transform:scaleX(.34);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1);}
+.m-read:hover::after{transform:scaleX(1);}
+.m-arrow{display:inline-block;margin-left:7px;transition:transform .28s ease;}
+.m-read:hover .m-arrow{transform:translate(2px,-2px);}
+.m-hint{position:absolute;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:65;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--muted);opacity:.85;transition:opacity .35s ease;pointer-events:none;white-space:nowrap;}
+.m-hint.off{opacity:0;visibility:hidden;}
+.m-menu-btn{position:absolute;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));z-index:70;width:50px;height:50px;border-radius:50%;background:var(--text);color:var(--bg);border:0;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.16);transition:transform .18s ease;}
+.m-menu-btn:focus-visible{outline:2px solid var(--text);outline-offset:3px;}
+.m-menu-btn:hover{transform:translateY(-1px);}
+.m-menu-btn:active{transform:scale(.94);}
+.m-menu-btn svg{display:block;}
+.m-menu{position:absolute;inset:0;z-index:80;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);visibility:hidden;transition:transform .34s cubic-bezier(.22,.61,.36,1),visibility 0s linear .34s;}
+.m-menu.open{transform:translateY(0);visibility:visible;transition:transform .34s cubic-bezier(.22,.61,.36,1),visibility 0s linear 0s;}
+.m-menu:focus,.m-lb:focus{outline:none;}
+.m-menu-top{flex:0 0 auto;padding:calc(26px + env(safe-area-inset-top)) 24px 0;}
+.m-menu-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.m-menu-site{font-size:14px;line-height:1.4;font-weight:500;letter-spacing:.01em;}
+.m-menu-site span{display:block;margin-top:4px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:400;}
+.m-menu-close{font-size:11px;line-height:1.4;letter-spacing:.04em;color:var(--muted);padding:2px 0;background:none;border:0;}
+.m-menu-close:hover{color:var(--text);}
+.m-filters{display:flex;flex-wrap:wrap;gap:5px 16px;margin-top:22px;padding-bottom:14px;border-bottom:1px solid var(--line);}
+.m-filters button{position:relative;padding:0 0 5px;font:inherit;font-size:11.5px;line-height:1.4;letter-spacing:.03em;color:var(--muted);background:none;border:0;cursor:pointer;transition:color .15s ease;}
+.m-filters button:hover{color:var(--text);}
+.m-filters button.on{color:var(--text);}
+.m-filters button.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--text);}
+.m-menu-list{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 24px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;}
+.m-menu-list::-webkit-scrollbar{width:2px;}
+.m-menu-list::-webkit-scrollbar-thumb{background:var(--line);}
+.m-menu-row{position:relative;width:100%;display:grid;grid-template-columns:56px 1fr;gap:12px;padding:14px 0 14px 12px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;}
+.m-menu-row.m-no-date{grid-template-columns:1fr;}
+.m-menu-row[hidden]{display:none;}
+.m-menu-row::before{content:"";position:absolute;left:0;top:17px;bottom:17px;width:2px;background:var(--text);opacity:0;}
+.m-menu-row.is-current::before{opacity:1;}
+.m-menu-date{font-family:var(--mono);font-size:9px;line-height:1.6;letter-spacing:.03em;color:var(--muted);padding-top:2px;}
+.m-menu-cat{display:block;margin-bottom:3px;font-size:9px;line-height:1.4;letter-spacing:.1em;color:var(--muted);}
+.m-menu-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:1.55;color:var(--text);}
+.m-menu-row.is-current .m-menu-name{font-weight:600;}
+.m-menu-row:hover .m-menu-name{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;}
+.m-menu-foot{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px calc(18px + env(safe-area-inset-bottom));border-top:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--muted);}
+.m-locked .m-deck{overflow:hidden;}
+.m-lb{position:absolute;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,.97);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility 0s linear .2s;}
+.m-lb.open{opacity:1;visibility:visible;transition:opacity .2s ease,visibility 0s linear 0s;}
+.m-lb img{width:auto;height:auto;max-width:92%;max-height:74%;object-fit:contain;}
+.m-lb-close{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;padding:8px;font-size:11px;letter-spacing:.06em;color:#fff;background:none;border:0;}
+.m-lb-bar{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:16px;}
+.m-lb-nav{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.32);background:rgba(10,10,10,.4);color:#fff;font-family:var(--mono);font-size:16px;}
+.m-lb-nav:hover{background:rgba(255,255,255,.14);}
+.m-lb-count{min-width:38px;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:rgba(255,255,255,.7);}
+@media (max-width:700px){
+  body{overflow:hidden;}
+  .site,.skip{display:none;}
+  .m-feed{display:block;position:fixed;inset:0;z-index:60;height:100vh;height:100dvh;background:var(--bg);color:var(--text);overflow:hidden;}
+}
+@media (max-width:390px){
+  .m-thumb{width:40px;height:40px;flex:0 0 40px;}
+}
+@media (max-width:340px){
+  .m-thumb{width:34px;height:34px;flex:0 0 34px;}
+}
+@media (max-height:700px){
+  .m-title{font-size:30px;}
+}
+`;
+
 // ---------- Markdown 渲染 ----------
 const md = new MarkdownIt({ html: false, linkify: true, breaks: true });
 
@@ -270,6 +385,357 @@ function renderTimeline(list, essayByFile) {
   return `<div class="feed">\n${entries.join('\n')}\n</div>`;
 }
 
+// ---------- 手机端满屏信息流 ----------
+// 桌面端（>700px）完全不渲染这套结构（CSS display:none），只作为手机端首页。
+const mobileFeedScript = `<script>
+(function(){
+  var feed = document.getElementById('mFeed');
+  if (!feed) return;
+  var deck = document.getElementById('mDeck');
+  var slides = Array.prototype.slice.call(feed.querySelectorAll('.m-slide'));
+  var menu = document.getElementById('mMenu');
+  var menuBtn = document.getElementById('mMenuBtn');
+  var menuClose = document.getElementById('mMenuClose');
+  var menuList = document.getElementById('mMenuList');
+  var menuCount = document.getElementById('mMenuCount');
+  var filters = document.getElementById('mFilters');
+  var hint = document.getElementById('mHint');
+  var lb = document.getElementById('mLb');
+  var lbImg = document.getElementById('mLbImg');
+  var lbCount = document.getElementById('mLbCount');
+  var mq = window.matchMedia('(max-width: 700px)');
+  var current = 0;
+  var filterCat = '*';
+  var lbList = [];
+  var lbIndex = 0;
+  var DEFAULT_FS = 24;
+  var MIN_FS = 12;
+
+  function fit(slide){
+    var box = slide.querySelector('.m-essay-box');
+    var inner = slide.querySelector('.m-essay-inner');
+    var text = slide.querySelector('.m-essay-text');
+    if (!box || !inner || !text) return;
+    text.style.fontSize = DEFAULT_FS + 'px';
+    var boxH = box.clientHeight;
+    if (!boxH) return;
+    var avail = boxH - 10;
+    var fs = DEFAULT_FS;
+    while (fs > MIN_FS && inner.offsetHeight > avail){
+      fs -= 1;
+      text.style.fontSize = fs + 'px';
+    }
+    var clipped = inner.offsetHeight > boxH + 1;
+    slide.classList.toggle('m-clipped', clipped);
+    var full = slide.querySelector('.m-full');
+    if (full) full.textContent = clipped ? '全文 →' : '详情 →';
+    var short = text.textContent.trim().length <= 20 && !slide.querySelector('.m-thumb');
+    slide.classList.toggle('m-short', short);
+  }
+  function fitAll(){
+    if (!mq.matches) return;
+    slides.forEach(fit);
+  }
+  function updateHint(){
+    if (hint) hint.classList.toggle('off', current !== 0);
+  }
+  function updateMenuCurrent(){
+    if (!menuList) return;
+    var rows = menuList.querySelectorAll('.m-menu-row');
+    for (var i = 0; i < rows.length; i++){
+      rows[i].classList.toggle('is-current', Number(rows[i].getAttribute('data-index')) === current);
+    }
+  }
+  function updateCount(){
+    if (!menuCount || !menuList) return;
+    var rows = menuList.querySelectorAll('.m-menu-row');
+    var n = 0;
+    for (var i = 0; i < rows.length; i++) if (!rows[i].hidden) n++;
+    menuCount.textContent = filterCat === '*' ? '共 ' + n + ' 条' : filterCat + ' · ' + n + ' 条';
+  }
+  function goTo(index, smooth){
+    index = Math.max(0, Math.min(slides.length - 1, index));
+    var h = deck.clientHeight;
+    if (!h) return;
+    deck.scrollTo({ top: index * h, behavior: smooth === false ? 'auto' : 'smooth' });
+  }
+
+  var ticking = false;
+  deck.addEventListener('scroll', function(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var h = deck.clientHeight || 1;
+      var i = Math.round(deck.scrollTop / h);
+      if (i !== current && i >= 0 && i < slides.length){
+        current = i;
+        updateHint();
+        updateMenuCurrent();
+      }
+      ticking = false;
+    });
+  }, { passive: true });
+
+  function openMenu(){
+    menu.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+    feed.classList.add('m-locked');
+    if (hint) hint.classList.add('off');
+    updateMenuCurrent();
+    updateCount();
+    menu.focus({ preventScroll: true });
+    var row = menuList.querySelector('.m-menu-row.is-current');
+    if (row) requestAnimationFrame(function(){
+      try { row.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+    });
+  }
+  function closeMenu(){
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    if (!lb.classList.contains('open')) feed.classList.remove('m-locked');
+    menuBtn.focus({ preventScroll: true });
+  }
+  menuBtn.addEventListener('click', openMenu);
+  menuClose.addEventListener('click', closeMenu);
+
+  if (filters){
+    filters.addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-cat]');
+      if (!btn) return;
+      filterCat = btn.getAttribute('data-cat');
+      var fbtns = filters.querySelectorAll('button');
+      for (var i = 0; i < fbtns.length; i++){
+        var on = fbtns[i] === btn;
+        fbtns[i].classList.toggle('on', on);
+        fbtns[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      var rows = menuList.querySelectorAll('.m-menu-row');
+      for (var j = 0; j < rows.length; j++){
+        rows[j].hidden = filterCat !== '*' && rows[j].getAttribute('data-cat') !== filterCat;
+      }
+      updateCount();
+    });
+  }
+
+  menuList.addEventListener('click', function(e){
+    var row = e.target.closest('.m-menu-row');
+    if (!row) return;
+    var index = Number(row.getAttribute('data-index'));
+    closeMenu();
+    requestAnimationFrame(function(){ goTo(index); });
+  });
+
+  function showLb(){
+    var item = lbList[lbIndex];
+    if (!item) return;
+    lbImg.src = item.src;
+    lbImg.alt = item.alt || '';
+    lbCount.textContent = (lbIndex + 1) + ' / ' + lbList.length;
+  }
+  function openLb(slide, start){
+    var holder = slide.querySelector('.m-thumbs');
+    lbList = [];
+    if (holder){
+      var raw = holder.getAttribute('data-images');
+      if (raw){
+        try { lbList = JSON.parse(raw); } catch (e) { lbList = []; }
+      }
+      if (!lbList.length){
+        var imgs = holder.querySelectorAll('.m-thumb img');
+        for (var i = 0; i < imgs.length; i++) lbList.push({ src: imgs[i].getAttribute('src'), alt: imgs[i].getAttribute('alt') || '' });
+      }
+    }
+    if (!lbList.length) return;
+    lbIndex = Math.max(0, Math.min(lbList.length - 1, start || 0));
+    showLb();
+    lb.classList.add('open');
+    lb.setAttribute('aria-hidden', 'false');
+    feed.classList.add('m-locked');
+    lb.focus({ preventScroll: true });
+  }
+  function closeLb(){
+    lb.classList.remove('open');
+    lb.setAttribute('aria-hidden', 'true');
+    if (!menu.classList.contains('open')) feed.classList.remove('m-locked');
+  }
+  function lbNav(delta){
+    if (!lbList.length) return;
+    lbIndex = (lbIndex + delta + lbList.length) % lbList.length;
+    showLb();
+  }
+  deck.addEventListener('click', function(e){
+    var thumb = e.target.closest('.m-thumb');
+    if (!thumb) return;
+    var slide = thumb.closest('.m-slide');
+    if (!slide) return;
+    openLb(slide, Number(thumb.getAttribute('data-index')) || 0);
+  });
+  document.getElementById('mLbClose').addEventListener('click', closeLb);
+  document.getElementById('mLbPrev').addEventListener('click', function(){ lbNav(-1); });
+  document.getElementById('mLbNext').addEventListener('click', function(){ lbNav(1); });
+  lb.addEventListener('click', function(e){ if (e.target === lb) closeLb(); });
+
+  document.addEventListener('keydown', function(e){
+    if (lb.classList.contains('open')){
+      if (e.key === 'Escape') closeLb();
+      if (e.key === 'ArrowLeft') lbNav(-1);
+      if (e.key === 'ArrowRight') lbNav(1);
+      return;
+    }
+    if (menu.classList.contains('open')){
+      if (e.key === 'Escape') closeMenu();
+      return;
+    }
+    if (!mq.matches) return;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown'){ e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp'){ e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'Home'){ e.preventDefault(); goTo(0); }
+    if (e.key === 'End'){ e.preventDefault(); goTo(slides.length - 1); }
+  });
+
+  var lastH = 0;
+  function onResize(){
+    if (!mq.matches) return;
+    var h = deck.clientHeight;
+    if (!h) return;
+    if (lastH && Math.abs(h - lastH) > 1) goTo(current, false);
+    lastH = h;
+    fitAll();
+  }
+  window.addEventListener('resize', onResize);
+  function onMqChange(){
+    requestAnimationFrame(function(){
+      lastH = deck.clientHeight;
+      if (mq.matches){ goTo(current, false); fitAll(); }
+    });
+  }
+  if (mq.addEventListener) mq.addEventListener('change', onMqChange);
+  else if (mq.addListener) mq.addListener(onMqChange);
+
+  updateHint();
+  updateMenuCurrent();
+  updateCount();
+  fitAll();
+  lastH = deck.clientHeight;
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+  setTimeout(fitAll, 120);
+})();
+<\/script>`;
+
+function imageParts(tag) {
+  const src = (tag.match(/\bsrc="([^"]*)"/i) || [])[1] || '';
+  const alt = (tag.match(/\balt="([^"]*)"/i) || [])[1] || '';
+  return { src, alt };
+}
+
+function renderMobileThumbs(images) {
+  if (!images.length) return '';
+  const parts = images.map(imageParts);
+  const shown = images.length > 5 ? 4 : images.length;
+  let html = parts.slice(0, shown).map((img, i) =>
+    `<button class="m-thumb" type="button" data-index="${i}" aria-label="查看第 ${i + 1} 张图片"><img src="${esc(img.src)}" alt="${esc(img.alt)}" loading="lazy"></button>`
+  ).join('');
+  if (images.length > 5) {
+    html += `<button class="m-thumb m-thumb-more" type="button" data-index="${shown}" aria-label="查看剩余 ${images.length - shown} 张图片">+${images.length - shown}</button>`;
+  }
+  return `<div class="m-thumbs" data-images="${esc(JSON.stringify(parts))}">${html}</div>`;
+}
+
+function renderMobileSlide(item, index) {
+  const meta = `<div class="m-meta"><span class="m-cat">${esc(item.cat)}</span>${showDate ? `<span class="m-date">${dateDot(item.date)}</span>` : ''}</div>`;
+  if (item.type === 'essay') {
+    return `<section class="m-slide" id="s${index + 1}" data-index="${index}" data-type="essay" data-cat="${esc(item.cat)}">
+  ${meta}
+  <div class="m-main"><div class="m-essay-box"><div class="m-essay-inner">
+    <div class="m-essay-text">${item.textHtml || '<p>（这篇还没有正文）</p>'}</div>
+    ${renderMobileThumbs(item.images)}
+  </div></div></div>
+  <div class="m-foot"><a class="m-full" href="${esc(item.href)}">详情 →</a></div>
+</section>`;
+  }
+  return `<section class="m-slide" id="s${index + 1}" data-index="${index}" data-type="article" data-cat="${esc(item.cat)}">
+  ${meta}
+  <div class="m-main m-article-main">
+    <h2 class="m-title"><a href="${esc(item.href)}">《${esc(item.title)}》</a></h2>
+    ${item.excerpt ? `<p class="m-excerpt">${esc(item.excerpt)}</p>` : ''}
+  </div>
+  <div class="m-foot"><a class="m-read" href="${esc(item.href)}">阅读全文 <span class="m-arrow">↗</span></a></div>
+</section>`;
+}
+
+function renderMobileMenu(items, categories) {
+  const filters = categories.length > 1 ? `<div class="m-filters" id="mFilters" aria-label="分类筛选">${categories.map((c, i) => {
+    const val = c.name === '全部' ? '*' : c.name;
+    return `<button type="button" data-cat="${esc(val)}" aria-pressed="${i === 0 ? 'true' : 'false'}"${i === 0 ? ' class="on"' : ''}>${esc(c.name)}</button>`;
+  }).join('')}</div>` : '';
+  const rows = items.map((item, i) => {
+    const name = item.type === 'article' ? `《${esc(item.title)}》` : esc(item.plain || '（图片随笔）');
+    return `<button class="m-menu-row${showDate ? '' : ' m-no-date'}${i === 0 ? ' is-current' : ''}" type="button" data-index="${i}" data-cat="${esc(item.cat)}">
+  ${showDate ? `<span class="m-menu-date">${dateDot(item.date)}</span>` : ''}
+  <span class="m-menu-body"><span class="m-menu-cat">${esc(item.cat)}</span><span class="m-menu-name">${name}</span></span>
+</button>`;
+  }).join('');
+  return `<div class="m-menu" id="mMenu" role="dialog" aria-modal="true" aria-label="目录" aria-hidden="true" tabindex="-1">
+  <div class="m-menu-top">
+    <div class="m-menu-bar">
+      <div class="m-menu-site">${esc(site.name || '我的博客')}<span>${site.subtitle ? esc(site.subtitle) + ' · ' : ''}目录</span></div>
+      <button class="m-menu-close" id="mMenuClose" type="button">关闭</button>
+    </div>
+    ${filters}
+  </div>
+  <div class="m-menu-list" id="mMenuList">${rows}</div>
+  <div class="m-menu-foot"><span id="mMenuCount">共 ${items.length} 条</span><span>最新在前</span></div>
+</div>`;
+}
+
+function renderMobileFeed(posts, essayByFile, categories) {
+  const items = posts.map((p) => {
+    if (p.isEssay) {
+      const e = essayByFile.get(p.file);
+      const textHtml = e.feedTextHtml || e.textHtml;
+      return {
+        type: 'essay',
+        cat: p.category,
+        date: p.date,
+        href: e.href,
+        textHtml,
+        plain: textOf(textHtml) || '（图片随笔）',
+        images: e.images || [],
+      };
+    }
+    const raw = fs.readFileSync(p.file, 'utf8');
+    return {
+      type: 'article',
+      cat: p.category,
+      date: p.date,
+      href: `posts/${encodeURI(p.slug)}.html`,
+      title: displayTitle(p.title),
+      excerpt: excerptFromRaw(raw, 92),
+      plain: displayTitle(p.title),
+      images: [],
+    };
+  });
+  const slides = items.map(renderMobileSlide).join('\n');
+  return `<div class="m-feed" id="mFeed">
+  <h1 class="sr-only">${esc(site.name || '我的博客')}</h1>
+  <a class="m-skip" href="#mDeck">跳到信息流</a>
+  <div class="m-deck" id="mDeck" tabindex="-1">${slides}</div>
+  <div class="m-hint" id="mHint">上滑翻页</div>
+  <button class="m-menu-btn" id="mMenuBtn" type="button" aria-label="打开目录" title="目录"><svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><path d="M1 1.5h16M1 7h16M1 12.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+  ${renderMobileMenu(items, categories)}
+  <div class="m-lb" id="mLb" role="dialog" aria-modal="true" aria-label="图片预览" aria-hidden="true" tabindex="-1">
+    <img id="mLbImg" src="" alt="">
+    <button class="m-lb-close" id="mLbClose" type="button">关闭</button>
+    <div class="m-lb-bar">
+      <button class="m-lb-nav" id="mLbPrev" type="button" aria-label="上一张">‹</button>
+      <span class="m-lb-count" id="mLbCount"></span>
+      <button class="m-lb-nav" id="mLbNext" type="button" aria-label="下一张">›</button>
+    </div>
+  </div>
+</div>
+${mobileFeedScript}`;
+}
+
 // ---------- 扫描并解析文章 ----------
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -341,6 +807,8 @@ function page(opts) {
     compact = null,
     catbar = '',
     footRight = '',
+    extraCss = '',
+    mobileFeed = '',
   } = opts;
 
   const year = new Date().getFullYear();
@@ -421,6 +889,7 @@ function page(opts) {
 <title>${title}</title>
 <style>
 ${baseCss}
+${extraCss}
 ${tweakCss}
 </style>
 </head>
@@ -436,6 +905,7 @@ ${body}
     <span>${footRight || '<a href="#top">回到顶部</a>'}</span>
   </footer>
 </div>
+${mobileFeed}
 ${lightbox}
 ${catFilter}
 </body>
@@ -527,10 +997,16 @@ for (const p of posts) {
 const essays = posts.filter(p => p.isEssay).map((p) => {
   const raw = fs.readFileSync(p.file, 'utf8');
   const rendered = fixImageSrc(md.render(raw), '');
+  // 手机端信息流：保留换行（<br>），去掉图片（图片单独成缩略图行）
+  const feedTextHtml = rendered
+    .replace(/<img\b[^>]*>/g, '')
+    .replace(/<p>\s*<\/p>/g, '')
+    .trim();
   return {
     ...p,
     href: `posts/${encodeURI(p.slug)}.html`,
     ...splitRendered(rendered),
+    feedTextHtml,
   };
 });
 
@@ -548,12 +1024,15 @@ const categories = [
 ];
 
 const indexBody = renderTimeline(posts, essayByFile);
+const mobileFeed = renderMobileFeed(posts, essayByFile, categories);
 const indexHtml = page({
   title: `${esc(site.name || '我的博客')}${site.subtitle ? ' · ' + esc(site.subtitle) : ''}`,
   body: indexBody || '<p class="empty">还没有文章。在 content/ 目录新建 .md 文件即可。</p>',
   needsLightbox: true,
   catbar: categories.length > 1 ? renderCatBar(categories) : '',
   footRight: `共 ${posts.length} 篇`,
+  extraCss: mobileFeedCss,
+  mobileFeed,
 });
 fs.writeFileSync(path.join(distDir, 'index.html'), indexHtml);
 
